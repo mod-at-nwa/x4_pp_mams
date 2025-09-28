@@ -51,7 +51,7 @@ cp -r PRJ-369-017-x4_pp_mams/pp_mams ~/Documents/Egosoft/X4/<YourPlayerID>/exten
 
 ## Configuration
 
-Edit parameters in `pp_mams/mdscripts/pp_mams.xml`:
+Edit parameters in `pp_mams/md/pp_mams.xml`:
 - `notify` (default: true) - Show notifications when pilots are assigned
 - `logbook` (default: true) - Write assignment events to logbook
 
@@ -86,11 +86,11 @@ Edit parameters in `pp_mams/mdscripts/pp_mams.xml`:
 ```
 pp_mams/
 ├── content.xml              # Mod registration and metadata
-├── mdscripts/
+├── md/
 │   └── pp_mams.xml         # Mission Director event handling
-├── libraries/
-│   └── pp_mams.lua         # Core pilot assignment logic
 └── README.md               # End-user documentation
+install_mod.sh               # Installation script for development
+debug_log_analyzer.sh        # Debug log analysis tool
 ```
 
 ### Testing
@@ -101,6 +101,34 @@ X4.exe -debug scripts -logfile debuglog.txt
 
 ## Version History
 
+- **v1.07** (2025-09-28): Major pilot assignment bug fixes and installation cleanup
+  - **CRITICAL**: Fixed invalid `assign_pilot` actions causing mod failures
+  - Replaced `assign_pilot` with correct `assign_control_entity` X4 syntax
+  - Created installation script (`install_mod.sh`) for proper deployment
+  - Cleaned up conflicting multiple installations (removed v1.02/v1.05/v1.06 conflicts)
+  - Removed duplicate `/mdscripts/` directory causing version conflicts
+  - Pilot assignment now works correctly without XML lookup errors
+- **v1.06** (2025-09-28): Intermediate fix attempt (superseded by v1.07)
+- **v1.05** (2025-09-28): Fixed MDScript syntax errors - pilot firing now works correctly
+  - Removed invalid `event_object_pilot_changed` event (doesn't exist in X4)
+  - Fixed `remove_pilot` actions to use correct `destroy_object` syntax
+  - All MDScript validation errors resolved
+  - Pilot management functionality now fully operational
+- **v1.04** (2025-09-28): Full pilot management system implementation
+  - Event-driven pilot assignment using pure Mission Director XML
+  - Battle ship priority pilot assignment (scalp from non-combat ships)
+  - Non-combat ship crew promotion from PHQ service pool
+  - Automatic pilot optimization on ship acquisition and pilot changes
+  - Extensive debug logging and user feedback system
+  - Fixed mod loading issues by removing Lua dependencies
+- **v1.03** (2025-09-28): Structural fixes for X4 compatibility
+  - Renamed mdscripts/ to md/ directory (X4 standard)
+  - Removed mdscript tags from content.xml
+  - Fixed MD script syntax errors
+- **v1.02** (2025-09-28): Basic loading and initialization
+  - Removed problematic Lua library declarations
+  - Fixed XML validation errors
+  - Basic mod loading with initialization cue
 - **v1.0** (2025-09-26): Initial release with core functionality
 
 ## Contributing

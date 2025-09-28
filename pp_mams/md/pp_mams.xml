@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 1.04'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 1.07'" />
 
         <!-- Initialize global variables -->
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -39,20 +39,7 @@
       </actions>
     </cue>
 
-    <!-- Pilot Change Handler -->
-    <cue name="OnPilotChanged" instantiate="true">
-      <conditions>
-        <event_object_pilot_changed />
-        <check_value value="event.object" op="exists" />
-        <check_value value="event.object.isclass.ship" />
-        <check_value value="event.object.owner" exact="faction.player" />
-        <check_value value="global.$pp_mams_enabled" />
-      </conditions>
-      <actions>
-        <debug_text text="'PP MAMS: Pilot changed on ' + event.object.knownname + ' - checking for optimization'" />
-        <signal_cue cue="ProcessShipForPilotAssignment" param="event.object" />
-      </actions>
-    </cue>
+    <!-- Note: X4 doesn't have event_object_pilot_changed, so we rely on ship acquisition events -->
 
     <!-- Main Processing Logic -->
     <cue name="ProcessShipForPilotAssignment">
@@ -222,20 +209,22 @@
         <debug_text text="'PP MAMS: Performing pilot swap'" />
 
         <!-- Remove pilot from source ship -->
-        <remove_pilot object="$source_ship" />
+        <do_if value="$source_ship.pilot.exists">
+          <destroy_object object="$source_ship.pilot" />
+        </do_if>
 
         <!-- Remove current pilot from target ship if exists -->
         <do_if value="$old_pilot.exists">
-          <remove_pilot object="$target_ship" />
+          <destroy_object object="$old_pilot" />
         </do_if>
 
         <!-- Assign new pilot to target ship -->
-        <assign_pilot object="$target_ship" pilot="$new_pilot" />
+        <assign_control_entity object="$target_ship" actor="$new_pilot" post="controlpost.aipilot" transfer="true" />
 
         <!-- Move old pilot to source ship or PHQ -->
         <do_if value="$old_pilot.exists">
           <do_if value="$source_ship.exists">
-            <assign_pilot object="$source_ship" pilot="$old_pilot" />
+            <assign_control_entity object="$source_ship" actor="$old_pilot" post="controlpost.aipilot" transfer="true" />
           </do_if>
           <do_else>
             <!-- Move to PHQ if no source ship -->
@@ -265,11 +254,11 @@
 
         <!-- Remove current pilot if exists -->
         <do_if value="$old_pilot.exists">
-          <remove_pilot object="$ship" />
+          <destroy_object object="$old_pilot" />
         </do_if>
 
         <!-- Assign new pilot -->
-        <assign_pilot object="$ship" pilot="$new_pilot" />
+        <assign_control_entity object="$ship" actor="$new_pilot" post="controlpost.aipilot" transfer="true" />
 
         <!-- Move old pilot to PHQ -->
         <do_if value="$old_pilot.exists">
