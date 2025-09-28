@@ -1,0 +1,23 @@
+<mdscript name="pp_mams" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+  <params>
+    <param name="notify" type="boolean" default="true" desc="Notification on assignment"/>
+    <param name="logbook" type="boolean" default="true" desc="Assignment in Logbook"/>
+  </params>
+  <cues>
+    <!-- Initialization cue -->
+    <cue name="Init" instantiate="true">
+      <conditions>
+        <check_value value="true" />
+      </conditions>
+      <actions>
+        <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
+        <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 1.02'" />
+        <show_notification caption="'PP MAMS Loaded'" text="'PP MAMS mod is now active!'" />
+        <write_to_logbook category="general" text="'PP MAMS: Pilot Personnel Merit Assignment Management System loaded and ready.'" />
+        <debug_text text="'=== PP MAMS: MOD LOADING COMPLETE ==='" />
+      </actions>
+    </cue>
+
+  </cues>
+</mdscript>

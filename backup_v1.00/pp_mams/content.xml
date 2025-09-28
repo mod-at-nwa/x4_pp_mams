@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS: Automatically assigns pilots to new ships based on merit and conditions. Replaces default pilots and handles sudden pilot needs." author="Meldrey" version="100" date="2025-09-26" save="false" enabled="1">
+  <text language="44" description="PP MAMS: Automatically assigns pilots to new ships based on merit and conditions. Replaces default pilots and handles sudden pilot needs." />
+  <dependency version="700" />
+  <mdscript name="pp_mams" />
+  <libraries>
+    <library name="pp_mams" file="pp_mams.lua" />
+  </libraries>
+</content>

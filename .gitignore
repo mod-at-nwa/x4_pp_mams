@@ -1,0 +1,49 @@
+# X4 Mod Development .gitignore
+
+# Temporary files and backups
+*.tmp
+*.bak
+*~
+.DS_Store
+Thumbs.db
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Debug and log files
+*.log
+debuglog.txt
+error.log
+
+# Build artifacts (if any)
+build/
+dist/
+*.zip
+
+# Personal testing files
+test/
+testing/
+scratch/
+
+# Steam workshop uploads (keep source)
+workshop_uploads/
+
+# X4 game-specific ignores
+# (Keep mod source files, ignore generated/temp)
+*.cache
+
+# OS generated files
+.Trashes
+ehthumbs.db
+
+# Don't ignore the actual mod files
+!pp_mams/
+!pp_mams/**/*
+
+# Documentation and project files to keep
+!*.md
+!docs/
+!docs/**/*
