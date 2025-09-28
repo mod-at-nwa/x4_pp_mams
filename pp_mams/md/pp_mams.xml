@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 1.07'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 1.08'" />
 
         <!-- Initialize global variables -->
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -27,7 +27,7 @@
     <!-- Ship Acquisition Handler -->
     <cue name="OnShipAcquired" instantiate="true">
       <conditions>
-        <event_object_changed_owner />
+        <event_player_owned_object_changed_owner />
         <check_value value="event.object" op="exists" />
         <check_value value="event.object.isclass.ship" />
         <check_value value="event.newowner" exact="faction.player" />

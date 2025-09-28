@@ -101,6 +101,12 @@ X4.exe -debug scripts -logfile debuglog.txt
 
 ## Version History
 
+- **v1.08** (2025-09-28): Critical XML syntax fixes for pilot firing functionality
+  - **CRITICAL**: Fixed missing `object` attributes causing XML parsing errors
+  - Changed `event_object_changed_owner` to `event_player_owned_object_changed_owner`
+  - Removed invalid `object="player.galaxy"` from `find_object_component` elements
+  - XML validation now passes completely - mod functions properly when pilots are fired
+  - Pilot reassignment now triggers correctly on ownership changes
 - **v1.07** (2025-09-28): Major pilot assignment bug fixes and installation cleanup
   - **CRITICAL**: Fixed invalid `assign_pilot` actions causing mod failures
   - Replaced `assign_pilot` with correct `assign_control_entity` X4 syntax
