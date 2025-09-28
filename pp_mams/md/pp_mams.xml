@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 1.08'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 1.11'" />
 
         <!-- Initialize global variables -->
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -24,19 +24,39 @@
       </actions>
     </cue>
 
-    <!-- Ship Acquisition Handler -->
-    <cue name="OnShipAcquired" instantiate="true">
+    <!-- Periodic Ship Monitoring System -->
+    <cue name="PeriodicShipCheck" instantiate="true">
       <conditions>
-        <event_player_owned_object_changed_owner />
-        <check_value value="event.object" op="exists" />
-        <check_value value="event.object.isclass.ship" />
-        <check_value value="event.newowner" exact="faction.player" />
-        <check_value value="global.$pp_mams_enabled" />
+        <event_game_loaded />
       </conditions>
       <actions>
-        <debug_text text="'PP MAMS: Ship acquired - ' + event.object.knownname + ' (ID: ' + event.object + ')'" />
-        <signal_cue cue="ProcessShipForPilotAssignment" param="event.object" />
+        <debug_text text="'PP MAMS: Starting periodic ship monitoring system'" />
+        <signal_cue_instantly cue="CheckTimer" />
       </actions>
+      <cues>
+        <cue name="CheckTimer" instantiate="true">
+          <conditions>
+            <event_cue_signalled />
+          </conditions>
+          <delay exact="30s" />
+          <actions>
+            <debug_text text="'PP MAMS: Periodic check - scanning fleet for pilot optimization'" />
+            <find_object_component name="$player_ships" object="player.galaxy" class="ship" owner="faction.player" space="player.galaxy" />
+
+            <do_all exact="$player_ships.count" counter="$i">
+              <set_value name="$ship" exact="$player_ships.{$i}" />
+
+              <!-- Check if ship needs a pilot or has a suboptimal one -->
+              <do_if value="not $ship.pilot.exists or $ship.pilot.skill.piloting lt 3">
+                <debug_text text="'PP MAMS: Found ship needing better pilot: ' + $ship.knownname" />
+                <signal_cue cue="ProcessShipForPilotAssignment" param="$ship" />
+              </do_if>
+            </do_all>
+
+            <signal_cue_instantly cue="this" />
+          </actions>
+        </cue>
+      </cues>
     </cue>
 
     <!-- Note: X4 doesn't have event_object_pilot_changed, so we rely on ship acquisition events -->
@@ -98,7 +118,7 @@
 
         <!-- Search through all player ships for better pilots on non-combat vessels -->
         <debug_text text="'PP MAMS: Searching player fleet for better pilots...'" />
-        <find_object_component name="$player_ships" class="ship" owner="faction.player" space="player.galaxy" />
+        <find_object_component name="$player_ships" object="player.galaxy" class="ship" owner="faction.player" space="player.galaxy" />
 
         <do_all exact="$player_ships.count" counter="$i">
           <set_value name="$candidate_ship" exact="$player_ships.{$i}" />
@@ -305,12 +325,8 @@
         <event_object_signalled object="player.entity" param="'pp_mams_test'" />
       </conditions>
       <actions>
-        <debug_text text="'PP MAMS: Manual test triggered - processing player ships'" />
-        <find_object_component name="$player_ships" class="ship" owner="faction.player" space="player.galaxy" />
-
-        <do_all exact="$player_ships.count" counter="$i">
-          <signal_cue cue="ProcessShipForPilotAssignment" param="$player_ships.{$i}" />
-        </do_all>
+        <debug_text text="'PP MAMS: Manual test triggered - forcing immediate fleet scan'" />
+        <signal_cue cue="PeriodicShipCheck.CheckTimer" />
       </actions>
     </cue>
 

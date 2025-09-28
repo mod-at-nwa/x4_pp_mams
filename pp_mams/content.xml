@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v1.07: Fixed pilot assignment system - assigns pilots to new ships based on merit and conditions. Replaces default pilots and handles sudden pilot needs." author="Meldrey" version="107" date="2025-09-28" save="false" enabled="1">
-  <text language="44" description="PP MAMS v1.07: Fixed pilot assignment system - assigns pilots to new ships based on merit and conditions. Replaces default pilots and handles sudden pilot needs." />
+<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v1.11: Fixed XML validation errors. Automatic periodic ship monitoring every 30 seconds with proper event handling." author="Meldrey" version="111" date="2025-09-28" save="false" enabled="1">
+  <text language="44" description="PP MAMS v1.11: Fixed XML validation errors. Automatic periodic ship monitoring every 30 seconds with proper event handling." />
 </content>

@@ -63,21 +63,27 @@ Edit parameters in `pp_mams/md/pp_mams.xml`:
 
 ## Testing
 
-- **Buy a fighter** → Should automatically get your best pilot
-- **Buy a trader** → Should get best crew member from PHQ
-- Check notifications and logbook for assignment confirmations
+- **Restart X4** → Load v1.11 (clears cached XML errors)
+- **Fire a pilot** → Within 30 seconds, PP MAMS will detect and reassign automatically
+- **Buy a new ship** → Periodic checks will optimize pilots within 30 seconds
+- **Check debug log** → Should show "version 1.11" and periodic scanning messages
+- **Monitor notifications** → Assignment confirmations appear when pilots are reassigned
 
 ## Troubleshooting
 
+- **XML errors in log**: Restart X4 to clear cached files from older versions
 - **No assignments happening**: Ensure you have a PHQ built with service crew
+- **Periodic checks not running**: Check debug log for "Starting periodic ship monitoring system"
+- **Version mismatch**: Look for "version 1.11" in debug log to confirm latest version loaded
 - **Scripts not running**: Enable debug mode: `-debug scripts -logfile debuglog.txt`
 - **Assignment failures**: Check that you have available crew in PHQ
 
 ## Technical Details
 
-- **Mission Director (MD)**: Event handling for ship purchases and crew changes
-- **Lua Scripts**: Complex pilot evaluation and assignment logic using X4's FFI
+- **Mission Director (MD)**: Pure XML-based event handling with periodic monitoring
+- **Automatic Detection**: 30-second interval scanning for suboptimal pilots (skill < 3)
 - **Skill Evaluation**: Piloting skill comparison determines optimal candidates
+- **Event Architecture**: Uses `event_cue_signalled` with `delay` for proper timing
 - **Error Handling**: Comprehensive safeguards prevent save corruption
 
 ## Development
@@ -101,6 +107,15 @@ X4.exe -debug scripts -logfile debuglog.txt
 
 ## Version History
 
+- **v1.11** (2025-09-28): Fixed XML validation errors with working automatic monitoring
+  - **FIXED**: All XML validation errors resolved - mod loads without errors
+  - **NEW**: Automatic periodic ship monitoring every 30 seconds
+  - **IMPROVED**: No console commands required - fully automatic operation
+  - **TECHNICAL**: Proper event handling using `event_cue_signalled` and `delay`
+  - **ENHANCED**: Smart detection of ships needing better pilots (skill < 3 or no pilot)
+  - Restart X4 required to clear cached XML errors from previous versions
+- **v1.10** (2025-09-28): First attempt at periodic monitoring (had XML errors)
+- **v1.09** (2025-09-28): Attempted console-based manual triggers (not viable in X4)
 - **v1.08** (2025-09-28): Critical XML syntax fixes for pilot firing functionality
   - **CRITICAL**: Fixed missing `object` attributes causing XML parsing errors
   - Changed `event_object_changed_owner` to `event_player_owned_object_changed_owner`
