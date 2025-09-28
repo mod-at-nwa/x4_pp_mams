@@ -1,0 +1,329 @@
+<mdscript name="pp_mams" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+  <params>
+    <param name="notify" type="boolean" default="true" desc="Notification on assignment"/>
+    <param name="logbook" type="boolean" default="true" desc="Assignment in Logbook"/>
+  </params>
+  <cues>
+    <!-- Initialization cue -->
+    <cue name="Init" instantiate="true">
+      <conditions>
+        <event_game_loaded />
+      </conditions>
+      <actions>
+        <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
+        <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 1.04'" />
+
+        <!-- Initialize global variables -->
+        <set_value name="global.$pp_mams_enabled" exact="true" />
+        <set_value name="global.$pp_mams_debug" exact="true" />
+
+        <show_notification caption="'PP MAMS Loaded'" text="'PP MAMS mod is now active!'" />
+        <write_to_logbook category="general" title="'PP MAMS Loaded'" text="'PP MAMS: Pilot Personnel Merit Assignment Management System loaded and ready.'" />
+        <debug_text text="'=== PP MAMS: MOD LOADING COMPLETE ==='" />
+      </actions>
+    </cue>
+
+    <!-- Ship Acquisition Handler -->
+    <cue name="OnShipAcquired" instantiate="true">
+      <conditions>
+        <event_object_changed_owner />
+        <check_value value="event.object" op="exists" />
+        <check_value value="event.object.isclass.ship" />
+        <check_value value="event.newowner" exact="faction.player" />
+        <check_value value="global.$pp_mams_enabled" />
+      </conditions>
+      <actions>
+        <debug_text text="'PP MAMS: Ship acquired - ' + event.object.knownname + ' (ID: ' + event.object + ')'" />
+        <signal_cue cue="ProcessShipForPilotAssignment" param="event.object" />
+      </actions>
+    </cue>
+
+    <!-- Pilot Change Handler -->
+    <cue name="OnPilotChanged" instantiate="true">
+      <conditions>
+        <event_object_pilot_changed />
+        <check_value value="event.object" op="exists" />
+        <check_value value="event.object.isclass.ship" />
+        <check_value value="event.object.owner" exact="faction.player" />
+        <check_value value="global.$pp_mams_enabled" />
+      </conditions>
+      <actions>
+        <debug_text text="'PP MAMS: Pilot changed on ' + event.object.knownname + ' - checking for optimization'" />
+        <signal_cue cue="ProcessShipForPilotAssignment" param="event.object" />
+      </actions>
+    </cue>
+
+    <!-- Main Processing Logic -->
+    <cue name="ProcessShipForPilotAssignment">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <set_value name="$ship" exact="event.param" />
+        <debug_text text="'PP MAMS: Processing ship for pilot assignment: ' + $ship.knownname" />
+
+        <!-- Check if ship exists and is valid -->
+        <do_if value="$ship.exists and $ship.isclass.ship">
+          <!-- Get ship purpose -->
+          <set_value name="$ship_purpose" exact="$ship.primarypurpose" />
+          <debug_text text="'PP MAMS: Ship purpose: ' + $ship_purpose" />
+
+          <!-- Branch based on ship type -->
+          <do_if value="$ship_purpose == purpose.fight">
+            <debug_text text="'PP MAMS: Battle ship detected - searching for best pilot'" />
+            <signal_cue cue="AssignBestPilotToBattleShip" param="$ship" />
+          </do_if>
+          <do_else>
+            <debug_text text="'PP MAMS: Non-combat ship detected - searching PHQ crew'" />
+            <signal_cue cue="AssignBestCrewToNonCombatShip" param="$ship" />
+          </do_else>
+        </do_if>
+        <do_else>
+          <debug_text text="'PP MAMS: Invalid ship object received'" />
+        </do_else>
+      </actions>
+    </cue>
+
+    <!-- Battle Ship Pilot Assignment -->
+    <cue name="AssignBestPilotToBattleShip">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <set_value name="$ship" exact="event.param" />
+        <set_value name="$current_pilot" exact="$ship.pilot" />
+        <set_value name="$current_skill" exact="0" />
+
+        <!-- Get current pilot skill -->
+        <do_if value="$current_pilot.exists">
+          <set_value name="$current_skill" exact="$current_pilot.skill.piloting" />
+          <debug_text text="'PP MAMS: Current pilot skill: ' + $current_skill" />
+        </do_if>
+        <do_else>
+          <debug_text text="'PP MAMS: No current pilot on ship'" />
+        </do_else>
+
+        <!-- Initialize best candidate variables -->
+        <set_value name="$best_pilot" exact="null" />
+        <set_value name="$best_ship" exact="null" />
+        <set_value name="$best_skill" exact="$current_skill" />
+
+        <!-- Search through all player ships for better pilots on non-combat vessels -->
+        <debug_text text="'PP MAMS: Searching player fleet for better pilots...'" />
+        <find_object_component name="$player_ships" class="ship" owner="faction.player" space="player.galaxy" />
+
+        <do_all exact="$player_ships.count" counter="$i">
+          <set_value name="$candidate_ship" exact="$player_ships.{$i}" />
+
+          <!-- Skip if it's the same ship -->
+          <do_if value="$candidate_ship != $ship">
+            <!-- Check if it's a non-combat ship -->
+            <do_if value="$candidate_ship.primarypurpose != purpose.fight">
+              <set_value name="$candidate_pilot" exact="$candidate_ship.pilot" />
+
+              <do_if value="$candidate_pilot.exists">
+                <set_value name="$candidate_skill" exact="$candidate_pilot.skill.piloting" />
+                <debug_text text="'PP MAMS: Found pilot on ' + $candidate_ship.knownname + ' with skill: ' + $candidate_skill" />
+
+                <!-- Check if this pilot is better -->
+                <do_if value="$candidate_skill gt $best_skill">
+                  <set_value name="$best_pilot" exact="$candidate_pilot" />
+                  <set_value name="$best_ship" exact="$candidate_ship" />
+                  <set_value name="$best_skill" exact="$candidate_skill" />
+                  <debug_text text="'PP MAMS: New best candidate found with skill: ' + $best_skill" />
+                </do_if>
+              </do_if>
+            </do_if>
+          </do_if>
+        </do_all>
+
+        <!-- Perform assignment if we found a better pilot -->
+        <do_if value="$best_pilot.exists and $best_ship.exists">
+          <debug_text text="'PP MAMS: Assigning better pilot to battle ship'" />
+          <signal_cue cue="PerformPilotSwap" param="[namespace=$ship, $best_ship, $best_pilot, $current_pilot]" />
+        </do_if>
+        <do_else>
+          <debug_text text="'PP MAMS: No better pilot found for battle ship'" />
+        </do_else>
+      </actions>
+    </cue>
+
+    <!-- Non-Combat Ship Crew Assignment -->
+    <cue name="AssignBestCrewToNonCombatShip">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <set_value name="$ship" exact="event.param" />
+        <set_value name="$current_pilot" exact="$ship.pilot" />
+        <set_value name="$current_skill" exact="0" />
+
+        <!-- Get current pilot skill -->
+        <do_if value="$current_pilot.exists">
+          <set_value name="$current_skill" exact="$current_pilot.skill.piloting" />
+          <debug_text text="'PP MAMS: Current pilot skill: ' + $current_skill" />
+        </do_if>
+        <do_else>
+          <debug_text text="'PP MAMS: No current pilot on ship'" />
+        </do_else>
+
+        <!-- Check for PHQ -->
+        <set_value name="$phq" exact="player.headquarters" />
+        <do_if value="$phq.exists">
+          <debug_text text="'PP MAMS: PHQ found, searching crew...'" />
+
+          <!-- Initialize best candidate variables -->
+          <set_value name="$best_crew" exact="null" />
+          <set_value name="$best_skill" exact="$current_skill" />
+
+          <!-- Search PHQ crew for better candidates -->
+          <do_all exact="$phq.people.count" counter="$i">
+            <set_value name="$candidate_crew" exact="$phq.people.{$i}" />
+
+            <!-- Check if crew member is available (service crew) -->
+            <do_if value="$candidate_crew.combinedskill gt 0">
+              <set_value name="$candidate_skill" exact="$candidate_crew.skill.piloting" />
+
+              <do_if value="$candidate_skill gt $best_skill">
+                <set_value name="$best_crew" exact="$candidate_crew" />
+                <set_value name="$best_skill" exact="$candidate_skill" />
+                <debug_text text="'PP MAMS: Found better crew member with skill: ' + $best_skill" />
+              </do_if>
+            </do_if>
+          </do_all>
+
+          <!-- Assign better crew if found -->
+          <do_if value="$best_crew.exists">
+            <debug_text text="'PP MAMS: Promoting crew to pilot on non-combat ship'" />
+            <signal_cue cue="PromoteCrewToPilot" param="[namespace=$ship, $best_crew, $current_pilot]" />
+          </do_if>
+          <do_else>
+            <debug_text text="'PP MAMS: No better crew found in PHQ'" />
+          </do_else>
+        </do_if>
+        <do_else>
+          <debug_text text="'PP MAMS: No PHQ found - skipping crew search'" />
+        </do_else>
+      </actions>
+    </cue>
+
+    <!-- Pilot Swap Implementation -->
+    <cue name="PerformPilotSwap">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <set_value name="$target_ship" exact="event.param.{1}" />
+        <set_value name="$source_ship" exact="event.param.{2}" />
+        <set_value name="$new_pilot" exact="event.param.{3}" />
+        <set_value name="$old_pilot" exact="event.param.{4}" />
+
+        <debug_text text="'PP MAMS: Performing pilot swap'" />
+
+        <!-- Remove pilot from source ship -->
+        <remove_pilot object="$source_ship" />
+
+        <!-- Remove current pilot from target ship if exists -->
+        <do_if value="$old_pilot.exists">
+          <remove_pilot object="$target_ship" />
+        </do_if>
+
+        <!-- Assign new pilot to target ship -->
+        <assign_pilot object="$target_ship" pilot="$new_pilot" />
+
+        <!-- Move old pilot to source ship or PHQ -->
+        <do_if value="$old_pilot.exists">
+          <do_if value="$source_ship.exists">
+            <assign_pilot object="$source_ship" pilot="$old_pilot" />
+          </do_if>
+          <do_else>
+            <!-- Move to PHQ if no source ship -->
+            <set_value name="$phq" exact="player.headquarters" />
+            <do_if value="$phq.exists">
+              <add_to_group groupname="$phq.people" object="$old_pilot" />
+            </do_if>
+          </do_else>
+        </do_if>
+
+        <!-- User feedback -->
+        <signal_cue cue="NotifyPilotAssignment" param="[namespace=$target_ship, $new_pilot, $new_pilot.skill.piloting]" />
+      </actions>
+    </cue>
+
+    <!-- Crew Promotion Implementation -->
+    <cue name="PromoteCrewToPilot">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <set_value name="$ship" exact="event.param.{1}" />
+        <set_value name="$new_pilot" exact="event.param.{2}" />
+        <set_value name="$old_pilot" exact="event.param.{3}" />
+
+        <debug_text text="'PP MAMS: Promoting crew member to pilot'" />
+
+        <!-- Remove current pilot if exists -->
+        <do_if value="$old_pilot.exists">
+          <remove_pilot object="$ship" />
+        </do_if>
+
+        <!-- Assign new pilot -->
+        <assign_pilot object="$ship" pilot="$new_pilot" />
+
+        <!-- Move old pilot to PHQ -->
+        <do_if value="$old_pilot.exists">
+          <set_value name="$phq" exact="player.headquarters" />
+          <do_if value="$phq.exists">
+            <add_to_group groupname="$phq.people" object="$old_pilot" />
+          </do_if>
+        </do_if>
+
+        <!-- User feedback -->
+        <signal_cue cue="NotifyPilotAssignment" param="[namespace=$ship, $new_pilot, $new_pilot.skill.piloting]" />
+      </actions>
+    </cue>
+
+    <!-- User Notification System -->
+    <cue name="NotifyPilotAssignment">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <set_value name="$ship" exact="event.param.{1}" />
+        <set_value name="$pilot" exact="event.param.{2}" />
+        <set_value name="$skill" exact="event.param.{3}" />
+
+        <set_value name="$message" exact="'Pilot assigned to ' + $ship.knownname + ': ' + $pilot.knownname + ' (Skill: ' + $skill + ')'" />
+
+        <!-- Show notification if enabled -->
+        <do_if value="$notify">
+          <show_notification caption="'PP MAMS Assignment'" text="$message" />
+        </do_if>
+
+        <!-- Write to logbook if enabled -->
+        <do_if value="$logbook">
+          <write_to_logbook category="general" title="'PP MAMS Assignment'" text="$message" />
+        </do_if>
+
+        <debug_text text="'PP MAMS: ' + $message" />
+      </actions>
+    </cue>
+
+    <!-- Manual Test Trigger (for debugging) -->
+    <cue name="ManualTestTrigger" instantiate="true">
+      <conditions>
+        <event_object_signalled object="player.entity" param="'pp_mams_test'" />
+      </conditions>
+      <actions>
+        <debug_text text="'PP MAMS: Manual test triggered - processing player ships'" />
+        <find_object_component name="$player_ships" class="ship" owner="faction.player" space="player.galaxy" />
+
+        <do_all exact="$player_ships.count" counter="$i">
+          <signal_cue cue="ProcessShipForPilotAssignment" param="$player_ships.{$i}" />
+        </do_all>
+      </actions>
+    </cue>
+
+  </cues>
+</mdscript>
