@@ -10,16 +10,16 @@
         <event_game_loaded />
       </conditions>
       <actions>
-        <debug_text text="'=== PP MAMS v3.11: XPath v4 from extracted files ==='" />
-        <debug_text text="'PP MAMS: Patched LogFired via conversations.xml diff!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 3.11'" />
+        <debug_text text="'=== PP MAMS v3.12: XPath v5 absolute paths ==='" />
+        <debug_text text="'PP MAMS: Using absolute XPath like kuertee mod!'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 3.12'" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
         <set_value name="global.$pp_mams_debug" exact="true" />
 
-        <show_notification caption="'PP MAMS v3.11 Loaded'" text="'XPath v4 - extracted game structure!'" />
-        <write_to_logbook category="general" title="'PP MAMS v3.11 Loaded'" text="'XPath v4 based on extracted conversations.xml structure'" />
-        <debug_text text="'=== PP MAMS v3.11: LOADING COMPLETE ==='" />
+        <show_notification caption="'PP MAMS v3.12 Loaded'" text="'XPath v5 - absolute paths from root!'" />
+        <write_to_logbook category="general" title="'PP MAMS v3.12 Loaded'" text="'XPath v5 with absolute paths: /mdscript/cues/cue[@name=DefaultComm]/...'" />
+        <debug_text text="'=== PP MAMS v3.12: LOADING COMPLETE ==='" />
       </actions>
     </cue>
 
