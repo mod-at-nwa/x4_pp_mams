@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 2.07'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 2.08'" />
 
         <!-- Initialize global variables -->
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -24,25 +24,94 @@
       </actions>
     </cue>
 
-    <!-- Enhanced Event Test: UI Triggered with Full Data Capture -->
-    <cue name="UIEventTest" instantiate="true">
+    <!-- UI Cascade Detection for Fleet Scanning -->
+    <cue name="UICascadeDetector" instantiate="true">
       <conditions>
         <event_ui_triggered />
       </conditions>
       <actions>
-        <debug_text text="'=== PP MAMS: event_ui_triggered FULL DATA ==='" />
-        <debug_text text="'event.param: ' + event.param" />
-        <debug_text text="'event.param2: ' + event.param2" />
-        <debug_text text="'event.param3: ' + event.param3" />
-        <debug_text text="'event.object: ' + event.object" />
-        <debug_text text="'event.object.class: ' + event.object.class" />
-        <debug_text text="'event.object.name: ' + event.object.name" />
-        <show_notification caption="'PP MAMS Enhanced UI Test'" text="'UI: ' + event.param + ' | Obj: ' + event.object + ' | P2: ' + event.param2" />
-        <debug_text text="'=== PP MAMS: event_ui_triggered DATA END ==='" />
+        <!-- Initialize cascade tracking variables if not set -->
+        <do_if value="not global.$pp_mams_cascade_count.exists">
+          <set_value name="global.$pp_mams_cascade_count" exact="0" />
+          <set_value name="global.$pp_mams_cascade_start_time" exact="player.age" />
+          <set_value name="global.$pp_mams_last_scan_time" exact="0" />
+        </do_if>
+
+        <!-- Check if we're starting a new cascade window -->
+        <set_value name="$current_time" exact="player.age" />
+        <set_value name="$time_since_cascade" exact="$current_time - global.$pp_mams_cascade_start_time" />
+
+        <do_if value="$time_since_cascade gt 1.0s">
+          <!-- Reset cascade counter for new window -->
+          <set_value name="global.$pp_mams_cascade_count" exact="1" />
+          <set_value name="global.$pp_mams_cascade_start_time" exact="$current_time" />
+          <debug_text text="'PP MAMS: New cascade window started'" />
+        </do_if>
+        <do_else>
+          <!-- Increment cascade counter -->
+          <set_value name="global.$pp_mams_cascade_count" exact="global.$pp_mams_cascade_count + 1" />
+          <debug_text text="'PP MAMS: Cascade event ' + global.$pp_mams_cascade_count + ' in window'" />
+
+          <!-- Trigger fleet scan if we hit cascade threshold and enough time has passed -->
+          <do_if value="global.$pp_mams_cascade_count ge 10">
+            <set_value name="$time_since_last_scan" exact="$current_time - global.$pp_mams_last_scan_time" />
+            <do_if value="$time_since_last_scan gt 30.0s">
+              <debug_text text="'PP MAMS: UI CASCADE DETECTED! Triggering fleet scan (throttle satisfied)'" />
+              <show_notification caption="'PP MAMS Cascade Scan'" text="'UI cascade detected - scanning fleet for pilot deficits'" />
+              <signal_cue cue="CascadeTriggeredFleetScan" />
+              <set_value name="global.$pp_mams_last_scan_time" exact="$current_time" />
+            </do_if>
+            <do_else>
+              <debug_text text="'PP MAMS: Cascade detected but scan throttled (last scan ' + $time_since_last_scan + 's ago)'" />
+            </do_else>
+          </do_if>
+        </do_else>
       </actions>
     </cue>
 
-    <!-- Note: X4 doesn't have event_object_pilot_changed, so we rely on ship acquisition events -->
+    <!-- Cascade-Triggered Fleet Scan for Pilot Deficits -->
+    <cue name="CascadeTriggeredFleetScan">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <debug_text text="'=== PP MAMS: CASCADE-TRIGGERED FLEET SCAN START ==='" />
+        <set_value name="$deficit_count" exact="0" />
+        <set_value name="$total_ships" exact="0" />
+
+        <!-- Scan all player ships for pilot deficits -->
+        <find_object_component name="$player_ships" object="player.galaxy" class="ship" owner="faction.player" space="player.galaxy" />
+        <set_value name="$total_ships" exact="$player_ships.count" />
+        <debug_text text="'PP MAMS: Scanning ' + $total_ships + ' player ships for pilot deficits'" />
+
+        <do_all exact="$player_ships.count" counter="$i">
+          <set_value name="$ship" exact="$player_ships.{$i}" />
+          <debug_text text="'PP MAMS: Checking ' + $ship.knownname + ' - has pilot: ' + $ship.pilot.exists" />
+
+          <!-- Check if ship needs a pilot and doesn't have one -->
+          <do_if value="not $ship.pilot.exists">
+            <set_value name="$deficit_count" exact="$deficit_count + 1" />
+            <debug_text text="'PP MAMS: PILOT DEFICIT DETECTED on ' + $ship.knownname" />
+          </do_if>
+        </do_all>
+
+        <!-- Report results -->
+        <debug_text text="'=== PP MAMS: FLEET SCAN COMPLETE ==='" />
+        <debug_text text="'PP MAMS: Total ships scanned: ' + $total_ships" />
+        <debug_text text="'PP MAMS: Ships with pilot deficits: ' + $deficit_count" />
+
+        <do_if value="$deficit_count gt 0">
+          <set_value name="$message" exact="'PP MAMS: ' + $deficit_count + ' pilot deficit(s) detected in fleet of ' + $total_ships + ' ships'" />
+          <show_notification caption="'PP MAMS Pilot Alert'" text="$message" />
+          <debug_text text="$message" />
+        </do_if>
+        <do_else>
+          <debug_text text="'PP MAMS: No pilot deficits found - all ships properly staffed'" />
+        </do_else>
+      </actions>
+    </cue>
+
+    <!-- Note: X4 doesn't have event_object_pilot_changed, so we rely on cascade detection -->
 
     <!-- Main Processing Logic -->
     <cue name="ProcessShipForPilotAssignment">
