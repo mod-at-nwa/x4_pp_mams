@@ -190,7 +190,7 @@
                   <debug_text text="'  - NEW BEST CANDIDATE: ' + $candidate_pilot.knownname + ' (skill: ' + $best_skill + ')'" />
                 </do_if>
                 <do_else>
-                  <debug_text text="'  - Pilot not better than current best (skill ' + $candidate_skill + ' <= ' + $best_skill + ')'" />
+                  <debug_text text="'  - Pilot not better than current best (skill ' + $candidate_skill + ' not greater than ' + $best_skill + ')'" />
                 </do_else>
               </do_if>
               <do_else>
@@ -269,11 +269,11 @@
                 <debug_text text="'  - NEW BEST CREW CANDIDATE: ' + $candidate_crew.knownname + ' (skill: ' + $best_skill + ')'" />
               </do_if>
               <do_else>
-                <debug_text text="'  - Crew not better than current best (skill ' + $candidate_skill + ' <= ' + $best_skill + ')'" />
+                <debug_text text="'  - Crew not better than current best (skill ' + $candidate_skill + ' not greater than ' + $best_skill + ')'" />
               </do_else>
             </do_if>
             <do_else>
-              <debug_text text="'  - Crew member not available (combined skill <= 0)'" />
+              <debug_text text="'  - Crew member not available (combined skill not greater than 0)'" />
             </do_else>
           </do_all>
 
