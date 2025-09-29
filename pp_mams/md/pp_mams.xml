@@ -50,7 +50,8 @@
               <set_value name="$ship_name" exact="$ship.knownname" />
 
               <!-- Process MAMS commands if ship name starts with MAMS: -->
-              <do_if value="$ship_name.{findtext.{$ship_name, 'MAMS:'}} == 1">
+              <set_value name="$mams_pos" exact="$ship_name.{findtext.{$ship_name, 'MAMS:'}}" />
+              <do_if value="$mams_pos == 1">
                 <signal_cue cue="ProcessShipCommand" param="$ship" />
               </do_if>
             </do_all>
@@ -70,7 +71,8 @@
               </do_if>
 
               <!-- Skip protected ships -->
-              <do_if value="$ship_name.{findtext.{$ship_name, 'MAMS:PROTECT'}} != 1">
+              <set_value name="$protect_pos" exact="$ship_name.{findtext.{$ship_name, 'MAMS:PROTECT'}}" />
+              <do_if value="$protect_pos != 1">
                 <debug_text text="'  - Ship status: Available for optimization'" />
 
                 <!-- Check if ship needs a pilot or has a suboptimal one -->
@@ -511,10 +513,13 @@
         <debug_text text="'PP MAMS 2.0: Processing command for ship: ' + $ship_name" />
 
         <!-- Extract command from ship name -->
-        <do_if value="$ship_name.{findtext.{$ship_name, 'MAMS:'}} == 1">
+        <set_value name="$mams_check" exact="$ship_name.{findtext.{$ship_name, 'MAMS:'}}" />
+        <do_if value="$mams_check == 1">
           <debug_text text="'PP MAMS 2.0: MAMS command detected in ship name'" />
+
           <!-- Process OPTIMIZE command -->
-          <do_if value="$ship_name.{findtext.{$ship_name, 'MAMS:OPTIMIZE'}} == 1">
+          <set_value name="$opt_check" exact="$ship_name.{findtext.{$ship_name, 'MAMS:OPTIMIZE'}}" />
+          <do_if value="$opt_check == 1">
             <debug_text text="'PP MAMS 2.0: OPTIMIZE command detected'" />
             <show_notification caption="'PP MAMS 2.0'" text="'Optimizing pilot for ' + $ship.knownname" />
             <signal_cue cue="ProcessShipForPilotAssignment" param="$ship" />
@@ -525,7 +530,8 @@
           </do_if>
 
           <!-- Process FIRE command -->
-          <do_elseif value="$ship_name.{findtext.{$ship_name, 'MAMS:FIRE'}} == 1">
+          <set_value name="$fire_check" exact="$ship_name.{findtext.{$ship_name, 'MAMS:FIRE'}}" />
+          <do_elseif value="$fire_check == 1">
             <debug_text text="'PP MAMS 2.0: FIRE command detected'" />
             <show_notification caption="'PP MAMS 2.0'" text="'Firing pilot from ' + $ship.knownname" />
             <signal_cue cue="FireUnderperformingPilot" param="$ship" />
@@ -536,7 +542,8 @@
           </do_elseif>
 
           <!-- Process PROTECT command -->
-          <do_elseif value="$ship_name.{findtext.{$ship_name, 'MAMS:PROTECT'}} == 1">
+          <set_value name="$protect_check" exact="$ship_name.{findtext.{$ship_name, 'MAMS:PROTECT'}}" />
+          <do_elseif value="$protect_check == 1">
             <debug_text text="'PP MAMS 2.0: PROTECT command detected - ship excluded from automation'" />
             <show_notification caption="'PP MAMS 2.0'" text="'Ship ' + $ship.knownname + ' protected from automation'" />
             <!-- Keep MAMS:PROTECT in name as permanent marker -->
