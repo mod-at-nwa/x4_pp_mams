@@ -5,10 +5,10 @@
 
 set -e
 
-NEW_VERSION="1.05"
-NEW_VERSION_NUM="105"
-OLD_VERSION="1.04"
-OLD_VERSION_NUM="104"
+NEW_VERSION="1.16"
+NEW_VERSION_NUM="116"
+OLD_VERSION="1.15"
+OLD_VERSION_NUM="115"
 TODAY=$(date '+%Y-%m-%d')
 
 echo "🚀 PP MAMS Version Update Script"
