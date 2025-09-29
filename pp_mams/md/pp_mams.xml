@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 2.05'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 2.06'" />
 
         <!-- Initialize global variables -->
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -24,21 +24,14 @@
       </actions>
     </cue>
 
-    <!-- Single Event Test: Player Owned Object Killed Detection -->
-    <cue name="KilledObjectEventTest" instantiate="true">
+    <!-- Single Event Test: UI Triggered Detection -->
+    <cue name="UIEventTest" instantiate="true">
       <conditions>
-        <event_player_owned_killed_object />
+        <event_ui_triggered />
       </conditions>
       <actions>
-        <set_value name="$killedObject" exact="event.param" />
-        <debug_text text="'PP MAMS: event_player_owned_killed_object fired - Object: ' + $killedObject + ' Type: ' + $killedObject.class" />
-        <show_notification caption="'PP MAMS Event Test'" text="'Object killed: ' + $killedObject.class" />
-
-        <!-- Check if it's a pilot -->
-        <do_if value="$killedObject.isclass.npc">
-          <debug_text text="'PP MAMS: PILOT DETECTED in killed object event!'" />
-          <show_notification caption="'PP MAMS PILOT EVENT'" text="'Pilot dismissed/killed detected!'" />
-        </do_if>
+        <debug_text text="'PP MAMS: event_ui_triggered fired - UI: ' + event.param" />
+        <show_notification caption="'PP MAMS UI Test'" text="'UI triggered: ' + event.param" />
       </actions>
     </cue>
 
