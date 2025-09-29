@@ -10,16 +10,16 @@
         <event_game_loaded />
       </conditions>
       <actions>
-        <debug_text text="'=== PP MAMS v3.04: CORRECTED SCANNER LOADING ==='" />
+        <debug_text text="'=== PP MAMS v3.06: USING FIND_SHIP ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 3.04'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 3.06'" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
         <set_value name="global.$pp_mams_debug" exact="true" />
 
-        <show_notification caption="'PP MAMS v3.04 Loaded'" text="'Corrected pilot detection active'" />
-        <write_to_logbook category="general" title="'PP MAMS v3.04 Loaded'" text="'PP MAMS: find_object_component scanner ready'" />
-        <debug_text text="'=== PP MAMS v3.04: LOADING COMPLETE ==='" />
+        <show_notification caption="'PP MAMS v3.06 Loaded'" text="'Using find_ship for detection'" />
+        <write_to_logbook category="general" title="'PP MAMS v3.06 Loaded'" text="'PP MAMS: find_ship scanner ready'" />
+        <debug_text text="'=== PP MAMS v3.06: LOADING COMPLETE ==='" />
       </actions>
     </cue>
 
@@ -49,9 +49,9 @@
             <set_value name="$deficit_count" exact="0" />
             <set_value name="$total_ships" exact="0" />
 
-            <!-- Corrected Method: find_object_component (proven to work) -->
-            <debug_text text="'PP MAMS: Using find_object_component to find player ships...'" />
-            <find_object_component name="$player_ships" space="player.galaxy" owner="faction.player" class="class.ship" multiple="true" />
+            <!-- Try find_ship instead -->
+            <debug_text text="'PP MAMS: Using find_ship to find player ships...'" />
+            <find_ship name="$player_ships" space="player.galaxy" owner="faction.player" multiple="true" />
 
             <do_if value="$player_ships" and="$player_ships.exists">
               <set_value name="$total_ships" exact="@$player_ships.count" />
