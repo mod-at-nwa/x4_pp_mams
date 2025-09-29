@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 2.03'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 2.04'" />
 
         <!-- Initialize global variables -->
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -24,14 +24,14 @@
       </actions>
     </cue>
 
-    <!-- Single Event Test: Player Alert Detection -->
-    <cue name="AlertEventTest" instantiate="true">
+    <!-- Single Event Test: Player Owned Object Killed Detection -->
+    <cue name="KilledObjectEventTest" instantiate="true">
       <conditions>
-        <event_player_alert />
+        <event_player_owned_killed_object />
       </conditions>
       <actions>
-        <debug_text text="'PP MAMS: event_player_alert fired'" />
-        <show_notification caption="'PP MAMS Event Test'" text="'event_player_alert detected'" />
+        <debug_text text="'PP MAMS: event_player_owned_killed_object fired'" />
+        <show_notification caption="'PP MAMS Event Test'" text="'event_player_owned_killed_object detected'" />
       </actions>
     </cue>
 
