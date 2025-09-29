@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+
+  <!-- Patch g_pilotleave to signal md.Conversations.LogFired cue when pilot is dismissed -->
+  <!-- Use comment as selector since nested quotes are problematic -->
+  <add sel="//signal_objects[../@value='not event.object.ship.order or event.object.ship.order.canplayercancel'][following-sibling::comment()[contains(.,'TODO @Owen find despawn')]]" pos="after">
+    <signal_cue_instantly cue="md.Conversations.LogFired" param="event.object" comment="PP MAMS: Signal LogFired when pilot dismissed"/>
+  </add>
+
+  <!-- Patch g_fire section (second occurrence) -->
+  <add sel="//do_else[signal_objects and preceding-sibling::do_if[@value='$npctemplate']]/signal_objects" pos="after">
+    <signal_cue_instantly cue="md.Conversations.LogFired" param="event.object" comment="PP MAMS: Signal LogFired when crew fired via fire menu"/>
+  </add>
+
+</diff>

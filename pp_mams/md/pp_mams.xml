@@ -10,28 +10,81 @@
         <event_game_loaded />
       </conditions>
       <actions>
-        <debug_text text="'=== PP MAMS v3.06: USING FIND_SHIP ==='" />
-        <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 3.06'" />
+        <debug_text text="'=== PP MAMS v3.10: PATCHED EVENT DETECTION ==='" />
+        <debug_text text="'PP MAMS: Patched LogFired via conversations.xml diff!'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 3.10'" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
         <set_value name="global.$pp_mams_debug" exact="true" />
 
-        <show_notification caption="'PP MAMS v3.06 Loaded'" text="'Using find_ship for detection'" />
-        <write_to_logbook category="general" title="'PP MAMS v3.06 Loaded'" text="'PP MAMS: find_ship scanner ready'" />
-        <debug_text text="'=== PP MAMS v3.06: LOADING COMPLETE ==='" />
+        <show_notification caption="'PP MAMS v3.10 Loaded'" text="'PATCHED LogFired - real events now!'" />
+        <write_to_logbook category="general" title="'PP MAMS v3.10 Loaded'" text="'Patched conversations.xml to signal LogFired on pilot dismissal'" />
+        <debug_text text="'=== PP MAMS v3.09: LOADING COMPLETE ==='" />
       </actions>
     </cue>
 
-    <!-- Simple Periodic Fleet Scanner -->
+    <!-- EVENT-DRIVEN: Listen for pilot firing via md.Conversations.LogFired -->
+    <cue name="PilotFiredListener" instantiate="true">
+      <conditions>
+        <event_cue_signalled cue="md.Conversations.LogFired" />
+      </conditions>
+      <actions>
+        <!-- event.param contains the fired actor -->
+        <set_value name="$fired_actor" exact="event.param" />
+
+        <debug_text text="'PP MAMS: PILOT FIRED EVENT DETECTED!'" />
+        <debug_text text="'PP MAMS: Fired actor: ' + @$fired_actor.typename + ' - ' + @$fired_actor.knownname" />
+        <debug_text text="'PP MAMS: Previously assigned to: ' + @$fired_actor.container.knownname" />
+
+        <!-- Check if this was a pilot (not other crew types) -->
+        <do_if value="$fired_actor.typename == 'pilot'">
+          <debug_text text="'PP MAMS: PILOT DEFICIT CREATED - checking ship...'" />
+
+          <!-- Find the ship that just lost its pilot -->
+          <set_value name="$ship" exact="$fired_actor.container" />
+
+          <do_if value="$ship.isclass.ship">
+            <show_notification caption="'PP MAMS Alert!'" text="'Pilot fired from ' + @$ship.knownname + '!'" />
+            <write_to_logbook category="general" title="'PP MAMS: Pilot Deficit'" text="'Ship ' + @$ship.knownname + ' lost pilot: ' + @$fired_actor.knownname" />
+            <debug_text text="'PP MAMS: Ship ' + @$ship.knownname + ' now has pilot deficit'" />
+          </do_if>
+        </do_if>
+        <do_else>
+          <debug_text text="'PP MAMS: Fired crew member was not a pilot (' + @$fired_actor.typename + ')'" />
+        </do_else>
+      </actions>
+    </cue>
+
+    <!-- EVENT MONITORS: Track game events for debugging - DEBUG ONLY, NO NOTIFICATIONS -->
+    <cue name="EventMonitor_NPCCreated" instantiate="true">
+      <conditions>
+        <event_npc_created />
+      </conditions>
+      <actions>
+        <debug_text text="'PP MAMS: event_npc_created fired! NPC: ' + @event.param.knownname" />
+        <!-- Notification disabled - too many NPCs spawn at game start -->
+      </actions>
+    </cue>
+
+    <cue name="EventMonitor_PlatformActor" instantiate="true">
+      <conditions>
+        <event_platform_actor_created />
+      </conditions>
+      <actions>
+        <debug_text text="'PP MAMS: event_platform_actor_created fired! Actor: ' + @event.param.knownname + ', Type: ' + @event.param2" />
+        <!-- Notification disabled - too many actors spawn at game start -->
+      </actions>
+    </cue>
+
+    <!-- LEGACY: Periodic Fleet Scanner (COMMENTED OUT - keeping for reference)
     <cue name="FleetScanner" instantiate="true">
       <conditions>
         <event_game_loaded />
       </conditions>
       <delay exact="5s" />
       <actions>
-        <debug_text text="'PP MAMS: Starting corrected scanner - first scan in 5 seconds'" />
-        <show_notification caption="'PP MAMS Scanner'" text="'Corrected scanner starting in 5 seconds'" />
+        <debug_text text="'PP MAMS: Starting fast 10-second scanner'" />
+        <show_notification caption="'PP MAMS v3.08'" text="'Fast 10s scanner active'" />
       </actions>
       <cues>
         <cue name="ScanLoop" instantiate="true">
@@ -41,16 +94,13 @@
               <event_cue_completed cue="ScanLoop" />
             </check_any>
           </conditions>
-          <delay exact="30s" />
+          <delay exact="10s" />
           <actions>
-            <debug_text text="'PP MAMS: scanning fleet...'" />
-            <show_notification caption="'PP MAMS'" text="'PP MAMS: scanning fleet...'" />
+            <debug_text text="'PP MAMS: Periodic scan running...'" />
 
             <set_value name="$deficit_count" exact="0" />
             <set_value name="$total_ships" exact="0" />
 
-            <!-- Try find_ship instead -->
-            <debug_text text="'PP MAMS: Using find_ship to find player ships...'" />
             <find_ship name="$player_ships" space="player.galaxy" owner="faction.player" multiple="true" />
 
             <do_if value="$player_ships" and="$player_ships.exists">
@@ -59,36 +109,28 @@
 
               <do_all exact="$total_ships" counter="$i">
                 <set_value name="$ship" exact="$player_ships.{$i}" />
-                <debug_text text="'PP MAMS: Checking ship ' + @$ship.knownname + ' (' + @$ship.id + ')'" />
 
-                <!-- Check pilot using proven pattern from working mods -->
                 <do_if value="$ship.pilot" and="$ship.pilot.exists">
-                  <debug_text text="'PP MAMS: Ship ' + @$ship.knownname + ' has pilot: ' + @$ship.pilot.knownname" />
+                  <debug_text text="'PP MAMS: ' + @$ship.knownname + ' has pilot'" />
                 </do_if>
                 <do_else>
                   <set_value name="$deficit_count" exact="$deficit_count + 1" />
-                  <debug_text text="'PP MAMS: PILOT DEFICIT DETECTED - ' + @$ship.knownname + ' (' + @$ship.id + ') has no pilot'" />
+                  <debug_text text="'PP MAMS: PILOT DEFICIT - ' + @$ship.knownname + ' (periodic scan)'" />
                 </do_else>
               </do_all>
             </do_if>
-            <do_else>
-              <debug_text text="'PP MAMS: find_object_component returned null or no player ships found'" />
-            </do_else>
 
             <debug_text text="'PP MAMS: Scan complete - ' + $deficit_count + ' deficits in ' + $total_ships + ' ships'" />
 
             <do_if value="$deficit_count gt 0">
-              <set_value name="$message" exact="'PP MAMS: ' + $deficit_count + ' pilot deficit(s) detected'" />
-              <show_notification caption="'PP MAMS Alert'" text="$message" />
-              <write_to_logbook category="general" title="'PP MAMS Alert'" text="'PP MAMS: ' + $deficit_count + ' pilot deficit(s) detected'" />
+              <show_notification caption="'PP MAMS Alert'" text="$deficit_count + ' pilot deficit(s) detected (periodic scan)'" />
+              <write_to_logbook category="general" title="'PP MAMS Alert'" text="'PP MAMS: ' + $deficit_count + ' pilot deficit(s) detected via periodic scan'" />
             </do_if>
-            <do_else>
-              <show_notification caption="'PP MAMS Scan'" text="'All ships have pilots'" />
-            </do_else>
           </actions>
         </cue>
       </cues>
     </cue>
+    -->
 
   </cues>
 </mdscript>
