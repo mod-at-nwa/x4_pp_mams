@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 1.13'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 1.15'" />
 
         <!-- Initialize global variables -->
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -31,9 +31,18 @@
       </conditions>
       <actions>
         <debug_text text="'PP MAMS: Starting periodic ship monitoring system'" />
-        <signal_cue_instantly cue="CheckTimer" />
+        <signal_cue cue="DelayedStart" />
       </actions>
       <cues>
+        <cue name="DelayedStart">
+          <conditions>
+            <event_cue_signalled />
+          </conditions>
+          <delay exact="1s" />
+          <actions>
+            <signal_cue cue="CheckTimer" />
+          </actions>
+        </cue>
         <cue name="CheckTimer" instantiate="true">
           <conditions>
             <event_cue_signalled />
@@ -51,9 +60,15 @@
                 <debug_text text="'PP MAMS: Found ship needing better pilot: ' + $ship.knownname" />
                 <signal_cue cue="ProcessShipForPilotAssignment" param="$ship" />
               </do_if>
+
+              <!-- Check for very poor pilots that should be fired -->
+              <do_elseif value="$ship.pilot.exists and $ship.pilot.skill.piloting lt 2">
+                <debug_text text="'PP MAMS: Found underperforming pilot that should be fired: ' + $ship.knownname" />
+                <signal_cue cue="FireUnderperformingPilot" param="$ship" />
+              </do_elseif>
             </do_all>
 
-            <signal_cue_instantly cue="this" />
+            <signal_cue_instantly cue="CheckTimer" />
           </actions>
         </cue>
       </cues>
@@ -290,6 +305,60 @@
         </do_if>
 
         <debug_text text="'PP MAMS: ' + $message" />
+      </actions>
+    </cue>
+
+    <!-- Fire Underperforming Pilot -->
+    <cue name="FireUnderperformingPilot">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <set_value name="$ship" exact="event.param" />
+        <set_value name="$pilot" exact="$ship.pilot" />
+
+        <debug_text text="'PP MAMS: Firing underperforming pilot from ' + $ship.knownname" />
+
+        <do_if value="$pilot.exists">
+          <set_value name="$pilot_name" exact="$pilot.knownname" />
+          <set_value name="$pilot_skill" exact="$pilot.skill.piloting" />
+
+          <!-- Remove the pilot using the correct dismiss_pilot action -->
+          <dismiss_pilot object="$ship" />
+
+          <!-- User feedback for firing -->
+          <set_value name="$message" exact="'Fired underperforming pilot from ' + $ship.knownname + ': ' + $pilot_name + ' (Skill: ' + $pilot_skill + ')'" />
+
+          <!-- Show notification if enabled -->
+          <do_if value="$notify">
+            <show_notification caption="'PP MAMS Dismissal'" text="$message" />
+          </do_if>
+
+          <!-- Write to logbook if enabled -->
+          <do_if value="$logbook">
+            <write_to_logbook category="general" title="'PP MAMS Dismissal'" text="$message" />
+          </do_if>
+
+          <debug_text text="'PP MAMS: ' + $message" />
+
+          <!-- Try to assign a better pilot immediately -->
+          <signal_cue cue="ProcessShipForPilotAssignment" param="$ship" />
+        </do_if>
+        <do_else>
+          <debug_text text="'PP MAMS: No pilot to fire on ship: ' + $ship.knownname" />
+        </do_else>
+      </actions>
+    </cue>
+
+    <!-- Manual Pilot Firing Trigger -->
+    <cue name="ManualFirePilot" instantiate="true">
+      <conditions>
+        <event_object_signalled object="player.entity" param2="'pp_mams_fire'" />
+      </conditions>
+      <actions>
+        <set_value name="$ship" exact="event.param" />
+        <debug_text text="'PP MAMS: Manual pilot firing triggered for ' + $ship.knownname" />
+        <signal_cue cue="FireUnderperformingPilot" param="$ship" />
       </actions>
     </cue>
 

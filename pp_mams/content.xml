@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v1.13: Fixed invalid remove_pilot commands - using proper assign_control_entity. Fixed cue reference errors." author="Meldrey" version="113" date="2025-09-28" save="false" enabled="1">
-  <text language="44" description="PP MAMS v1.13: Fixed invalid remove_pilot commands - using proper assign_control_entity. Fixed cue reference errors." />
+<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v1.15: Fixed critical pilot firing errors - replaced invalid remove_object_assignment with dismiss_pilot and fixed delay syntax." author="Meldrey" version="115" date="2025-09-28" save="false" enabled="1">
+  <text language="44" description="PP MAMS v1.15: Fixed critical pilot firing errors - replaced invalid remove_object_assignment with dismiss_pilot and fixed delay syntax." />
 </content>

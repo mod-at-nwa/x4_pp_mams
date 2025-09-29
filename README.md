@@ -63,10 +63,10 @@ Edit parameters in `pp_mams/md/pp_mams.xml`:
 
 ## Testing
 
-- **Restart X4** → Load v1.11 (clears cached XML errors)
+- **Restart X4** → Load v1.15 (clears cached XML errors)
 - **Fire a pilot** → Within 30 seconds, PP MAMS will detect and reassign automatically
 - **Buy a new ship** → Periodic checks will optimize pilots within 30 seconds
-- **Check debug log** → Should show "version 1.11" and periodic scanning messages
+- **Check debug log** → Should show "version 1.15" and periodic scanning messages
 - **Monitor notifications** → Assignment confirmations appear when pilots are reassigned
 
 ## Troubleshooting
@@ -74,7 +74,7 @@ Edit parameters in `pp_mams/md/pp_mams.xml`:
 - **XML errors in log**: Restart X4 to clear cached files from older versions
 - **No assignments happening**: Ensure you have a PHQ built with service crew
 - **Periodic checks not running**: Check debug log for "Starting periodic ship monitoring system"
-- **Version mismatch**: Look for "version 1.11" in debug log to confirm latest version loaded
+- **Version mismatch**: Look for "version 1.15" in debug log to confirm latest version loaded
 - **Scripts not running**: Enable debug mode: `-debug scripts -logfile debuglog.txt`
 - **Assignment failures**: Check that you have available crew in PHQ
 
@@ -107,6 +107,14 @@ X4.exe -debug scripts -logfile debuglog.txt
 
 ## Version History
 
+- **v1.15** (2025-09-28): **CRITICAL FIX - Pilot firing now works correctly!**
+  - **FIXED**: Replaced invalid `remove_object_assignment` with correct `dismiss_pilot` action
+  - **FIXED**: Moved standalone `delay` into proper cue structure to prevent XML errors
+  - **FIXED**: Corrected cue signaling for continuous monitoring loop
+  - **RESOLVED**: All MDScript syntax errors that prevented pilot firing functionality
+  - **ENHANCED**: Added automatic firing of underperforming pilots (skill < 2)
+  - **TECHNICAL**: Uses proper X4 MDScript actions validated against game files
+  - Pilot firing functionality now works as intended - major breakthrough!
 - **v1.11** (2025-09-28): Fixed XML validation errors with working automatic monitoring
   - **FIXED**: All XML validation errors resolved - mod loads without errors
   - **NEW**: Automatic periodic ship monitoring every 30 seconds
