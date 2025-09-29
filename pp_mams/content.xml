@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v3.0: Simple periodic fleet scanner for pilot deficit detection." author="Meldrey" version="300" date="2025-09-29" save="false" enabled="1">
-  <text language="44" description="PP MAMS v3.0: Simple periodic fleet scanner for pilot deficit detection." />
+<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v3.01: Fixed periodic scanner with visible activity." author="Meldrey" version="301" date="2025-09-29" save="false" enabled="1">
+  <text language="44" description="PP MAMS v3.01: Fixed periodic scanner with visible activity." />
 </content>

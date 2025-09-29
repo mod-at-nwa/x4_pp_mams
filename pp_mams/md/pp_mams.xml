@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS v3.0: SIMPLE SCANNER LOADING ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 3.0'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 3.01'" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
         <set_value name="global.$pp_mams_debug" exact="true" />
@@ -24,27 +24,30 @@
     </cue>
 
     <!-- Simple Periodic Fleet Scanner -->
-    <cue name="PeriodicFleetScanner" instantiate="true">
+    <cue name="FleetScanner" instantiate="true">
       <conditions>
         <event_game_loaded />
       </conditions>
+      <delay exact="5s" />
       <actions>
-        <debug_text text="'PP MAMS: Starting periodic fleet scanner (30 second intervals)'" />
+        <debug_text text="'PP MAMS: Starting fleet scanner - first scan in 5 seconds'" />
+        <show_notification caption="'PP MAMS Scanner'" text="'Fleet scanner starting in 5 seconds'" />
       </actions>
       <cues>
-        <cue name="ScanTimer" instantiate="true">
+        <cue name="ScanLoop" instantiate="true">
           <conditions>
             <check_any>
               <event_cue_completed cue="parent" />
-              <event_cue_completed cue="ScanTimer" />
+              <event_cue_completed cue="ScanLoop" />
             </check_any>
           </conditions>
           <delay exact="30s" />
           <actions>
-            <debug_text text="'PP MAMS: Scanning fleet for pilot deficits...'" />
+            <debug_text text="'PP MAMS: scanning fleet...'" />
+            <show_notification caption="'PP MAMS'" text="'PP MAMS: scanning fleet...'" />
+
             <set_value name="$deficit_count" exact="0" />
             <set_value name="$total_ships" exact="0" />
-            <set_value name="$deficit_ships" exact="[]" />
 
             <find_object_component name="$player_ships" object="player.galaxy" class="ship" owner="faction.player" space="player.galaxy" />
             <set_value name="$total_ships" exact="$player_ships.count" />
@@ -53,18 +56,19 @@
               <set_value name="$ship" exact="$player_ships.{$i}" />
               <do_if value="not $ship.pilot.exists">
                 <set_value name="$deficit_count" exact="$deficit_count + 1" />
-                <append_to_list name="$deficit_ships" exact="$ship.knownname" />
                 <debug_text text="'PP MAMS: PILOT DEFICIT - ' + $ship.knownname" />
               </do_if>
             </do_all>
 
-            <debug_text text="'PP MAMS: Scan complete - ' + $deficit_count + ' deficits found in ' + $total_ships + ' ships'" />
+            <debug_text text="'PP MAMS: Scan complete - ' + $deficit_count + ' deficits in ' + $total_ships + ' ships'" />
 
             <do_if value="$deficit_count gt 0">
               <set_value name="$message" exact="'PP MAMS: ' + $deficit_count + ' pilot deficit(s) detected'" />
               <show_notification caption="'PP MAMS Alert'" text="$message" />
-              <debug_text text="$message" />
             </do_if>
+            <do_else>
+              <show_notification caption="'PP MAMS Scan'" text="'All ships have pilots'" />
+            </do_else>
           </actions>
         </cue>
       </cues>
