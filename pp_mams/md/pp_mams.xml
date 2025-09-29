@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 1.11'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 1.13'" />
 
         <!-- Initialize global variables -->
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -148,7 +148,7 @@
         <!-- Perform assignment if we found a better pilot -->
         <do_if value="$best_pilot.exists and $best_ship.exists">
           <debug_text text="'PP MAMS: Assigning better pilot to battle ship'" />
-          <signal_cue cue="PerformPilotSwap" param="[namespace=$ship, $best_ship, $best_pilot, $current_pilot]" />
+          <signal_cue cue="PerformPilotSwap" param="[$ship, $best_ship, $best_pilot, $current_pilot]" />
         </do_if>
         <do_else>
           <debug_text text="'PP MAMS: No better pilot found for battle ship'" />
@@ -203,7 +203,7 @@
           <!-- Assign better crew if found -->
           <do_if value="$best_crew.exists">
             <debug_text text="'PP MAMS: Promoting crew to pilot on non-combat ship'" />
-            <signal_cue cue="PromoteCrewToPilot" param="[namespace=$ship, $best_crew, $current_pilot]" />
+            <signal_cue cue="PromoteCrewToPilot" param="[$ship, $best_crew, $current_pilot]" />
           </do_if>
           <do_else>
             <debug_text text="'PP MAMS: No better crew found in PHQ'" />
@@ -228,35 +228,22 @@
 
         <debug_text text="'PP MAMS: Performing pilot swap'" />
 
-        <!-- Remove pilot from source ship -->
-        <do_if value="$source_ship.pilot.exists">
-          <destroy_object object="$source_ship.pilot" />
-        </do_if>
-
-        <!-- Remove current pilot from target ship if exists -->
-        <do_if value="$old_pilot.exists">
-          <destroy_object object="$old_pilot" />
-        </do_if>
+        <!-- Store pilots for reassignment -->
+        <set_value name="$source_pilot" exact="$source_ship.pilot" />
+        <set_value name="$target_pilot" exact="$target_ship.pilot" />
 
         <!-- Assign new pilot to target ship -->
         <assign_control_entity object="$target_ship" actor="$new_pilot" post="controlpost.aipilot" transfer="true" />
 
-        <!-- Move old pilot to source ship or PHQ -->
-        <do_if value="$old_pilot.exists">
-          <do_if value="$source_ship.exists">
-            <assign_control_entity object="$source_ship" actor="$old_pilot" post="controlpost.aipilot" transfer="true" />
+        <!-- Assign source ship pilot (if exists) to source ship, otherwise assign old pilot -->
+        <do_if value="$source_ship.exists">
+          <do_if value="$target_pilot.exists">
+            <assign_control_entity object="$source_ship" actor="$target_pilot" post="controlpost.aipilot" transfer="true" />
           </do_if>
-          <do_else>
-            <!-- Move to PHQ if no source ship -->
-            <set_value name="$phq" exact="player.headquarters" />
-            <do_if value="$phq.exists">
-              <add_to_group groupname="$phq.people" object="$old_pilot" />
-            </do_if>
-          </do_else>
         </do_if>
 
         <!-- User feedback -->
-        <signal_cue cue="NotifyPilotAssignment" param="[namespace=$target_ship, $new_pilot, $new_pilot.skill.piloting]" />
+        <signal_cue cue="NotifyPilotAssignment" param="[$target_ship, $new_pilot, $new_pilot.skill.piloting]" />
       </actions>
     </cue>
 
@@ -272,24 +259,11 @@
 
         <debug_text text="'PP MAMS: Promoting crew member to pilot'" />
 
-        <!-- Remove current pilot if exists -->
-        <do_if value="$old_pilot.exists">
-          <destroy_object object="$old_pilot" />
-        </do_if>
-
-        <!-- Assign new pilot -->
+        <!-- Assign new pilot (this automatically removes the old pilot) -->
         <assign_control_entity object="$ship" actor="$new_pilot" post="controlpost.aipilot" transfer="true" />
 
-        <!-- Move old pilot to PHQ -->
-        <do_if value="$old_pilot.exists">
-          <set_value name="$phq" exact="player.headquarters" />
-          <do_if value="$phq.exists">
-            <add_to_group groupname="$phq.people" object="$old_pilot" />
-          </do_if>
-        </do_if>
-
         <!-- User feedback -->
-        <signal_cue cue="NotifyPilotAssignment" param="[namespace=$ship, $new_pilot, $new_pilot.skill.piloting]" />
+        <signal_cue cue="NotifyPilotAssignment" param="[$ship, $new_pilot, $new_pilot.skill.piloting]" />
       </actions>
     </cue>
 
@@ -326,7 +300,7 @@
       </conditions>
       <actions>
         <debug_text text="'PP MAMS: Manual test triggered - forcing immediate fleet scan'" />
-        <signal_cue cue="PeriodicShipCheck.CheckTimer" />
+        <signal_cue_instantly cue="PeriodicShipCheck.CheckTimer" />
       </actions>
     </cue>
 

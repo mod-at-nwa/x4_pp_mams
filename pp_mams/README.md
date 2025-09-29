@@ -1,15 +1,16 @@
 # Pilot Personnel Merit Assignment Management System (PP MAMS)
 
 ## Overview
-PP MAMS is an X4: Foundations mod that automatically assigns optimal pilots to newly purchased ships based on merit and specific conditions. The mod intelligently replaces default pilots with better candidates from your personnel pool.
+PP MAMS is an X4: Foundations mod that automatically monitors your fleet every 30 seconds and assigns optimal pilots based on merit and ship requirements. The mod intelligently manages pilot assignments to ensure your ships always have the best available crew.
 
 ## Features
-- **Merit-Based Assignment**: Assigns pilots based on actual piloting skill ratings
+- **Automatic Fleet Monitoring**: Scans your fleet every 30 seconds for pilot optimization opportunities
+- **Merit-Based Assignment**: Assigns pilots based on actual piloting skill ratings (minimum skill 3)
 - **Battle Ship Priority**: Combat vessels get the highest skilled pilots available
 - **Non-Combat Optimization**: Trade/mining ships get the best available crew from PHQ pool
-- **Smart Scalping**: Battle ships can take pilots from non-combat vessels if needed
+- **Smart Pilot Swapping**: Battle ships can take pilots from non-combat vessels if needed
 - **Configurable Notifications**: Enable/disable in-game notifications and logbook entries
-- **Graceful Fallbacks**: Keeps default pilots when no better candidates are available
+- **Real-time Processing**: Continuously maintains optimal pilot assignments
 
 ## Ship Classification
 - **Battle Ships**: Ships with `purpose == 'fight'` (fighters, destroyers, carriers)
@@ -38,20 +39,27 @@ Edit the parameters in `mdscripts/pp_mams.xml`:
 - `logbook` (default: true) - Write assignment events to logbook
 
 ## How It Works
-1. **New Ship Purchase**: When you buy a ship, the mod:
-   - Identifies if it's a battle or non-combat vessel
-   - Searches for better pilots in your fleet/PHQ
-   - Assigns the best available pilot
-   - Moves the original pilot to PHQ service crew
+1. **Periodic Fleet Monitoring**: Every 30 seconds, the mod:
+   - Scans all player ships for pilot optimization opportunities
+   - Identifies ships without pilots or with pilots below skill 3
+   - Triggers appropriate assignment logic based on ship type
 
-2. **Pilot Loss Events**: When a ship loses its pilot:
-   - Automatically triggers the same assignment logic
-   - Ensures your ships always have optimal crew
+2. **Battle Ship Assignment**: For combat vessels:
+   - Searches through all non-combat ships for better pilots
+   - Swaps the best available pilot to the battle ship
+   - Original pilots remain on their previous ships
+
+3. **Non-Combat Assignment**: For trade/mining ships:
+   - Searches PHQ crew for available personnel
+   - Promotes the best crew member to pilot position
+   - Uses assign_control_entity for seamless transitions
 
 ## Testing
-- Buy a fighter → Should get your best pilot
-- Buy a trader → Should get best crew from PHQ
+- Wait 30 seconds after loading → Automatic fleet scan begins
+- Buy ships with poor pilots → Should be upgraded automatically on next scan
+- Fire pilots from ships → Replacements assigned on next monitoring cycle
 - Check notifications and logbook for assignment confirmations
+- Use debug command: Signal player with 'pp_mams_test' to trigger immediate scan
 
 ## Troubleshooting
 - **No assignments happening**: Ensure you have a PHQ built
@@ -59,12 +67,19 @@ Edit the parameters in `mdscripts/pp_mams.xml`:
 - **Assignment failures**: Check that you have available crew in PHQ
 
 ## Technical Details
-- Uses Mission Director (MD) for event handling
-- Lua scripts handle complex pilot evaluation and assignment
-- Piloting skill comparison determines "best" candidates
-- Comprehensive error handling prevents save corruption
+- Uses Mission Director (MD) for periodic fleet monitoring
+- Event-driven architecture with 30-second scanning intervals
+- Piloting skill comparison determines "best" candidates (skill level 3+ required)
+- Direct assign_control_entity usage for reliable pilot assignments
+- Comprehensive debug logging for troubleshooting
 
 ## Version History
+- v1.13 (2025-09-28): **CURRENT** - Fixed invalid remove_pilot commands, improved pilot assignment reliability
+- v1.12 (2025-09-28): Fixed pilot firing issues with proper PHQ transfers and cue signaling
+- v1.11 (2025-09-28): Fixed XML validation errors and periodic monitoring system
+- v1.08 (2025-09-28): Critical XML syntax fixes for pilot firing functionality
+- v1.07 (2025-09-28): Fixed pilot assignment bugs and installation cleanup
+- v1.04 (2025-09-28): Full pilot management system implementation
 - v1.0 (2025-09-26): Initial release with core functionality
 
 ## Support

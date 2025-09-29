@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v1.11: Fixed XML validation errors. Automatic periodic ship monitoring every 30 seconds with proper event handling." author="Meldrey" version="111" date="2025-09-28" save="false" enabled="1">
-  <text language="44" description="PP MAMS v1.11: Fixed XML validation errors. Automatic periodic ship monitoring every 30 seconds with proper event handling." />
+<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v1.13: Fixed invalid remove_pilot commands - using proper assign_control_entity. Fixed cue reference errors." author="Meldrey" version="113" date="2025-09-28" save="false" enabled="1">
+  <text language="44" description="PP MAMS v1.13: Fixed invalid remove_pilot commands - using proper assign_control_entity. Fixed cue reference errors." />
 </content>
