@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v2.01: Enhanced debug logging and ship name command interface with comprehensive pilot firing diagnostics." author="Meldrey" version="201" date="2025-09-28" save="false" enabled="1">
-  <text language="44" description="PP MAMS v2.01: Enhanced debug logging and ship name command interface with comprehensive pilot firing diagnostics." />
+<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v2.02: Event-driven pilot change detection - zero overhead, instant response." author="Meldrey" version="202" date="2025-09-28" save="false" enabled="1">
+  <text language="44" description="PP MAMS v2.02: Event-driven pilot change detection - zero overhead, instant response." />
 </content>

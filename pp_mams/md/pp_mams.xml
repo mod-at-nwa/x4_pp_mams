@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 2.01'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 2.02'" />
 
         <!-- Initialize global variables -->
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -24,82 +24,15 @@
       </actions>
     </cue>
 
-    <!-- Periodic Ship Monitoring System -->
-    <cue name="PeriodicShipCheck" instantiate="true">
+    <!-- Event-Driven Pilot Change Detection -->
+    <cue name="PilotChangeDetector" instantiate="true">
       <conditions>
-        <event_game_loaded />
+        <event_player_owned_object_changed_pilot />
       </conditions>
-      <delay exact="1s" />
       <actions>
-        <debug_text text="'PP MAMS: Starting periodic ship monitoring system'" />
-        <signal_cue cue="CheckTimer" />
+        <debug_text text="'PP MAMS: pilot change event detected.'" />
+        <show_notification caption="'PP MAMS'" text="'PP MAMS: pilot change event detected.'" />
       </actions>
-      <cues>
-        <cue name="CheckTimer" instantiate="true">
-          <conditions>
-            <event_cue_signalled />
-          </conditions>
-          <delay exact="10s" />
-          <actions>
-            <debug_text text="'PP MAMS: Periodic check - scanning fleet for pilot optimization'" />
-            <find_object_component name="$player_ships" object="player.galaxy" class="ship" owner="faction.player" space="player.galaxy" />
-
-            <!-- PP MAMS 2.0: Check for ship name commands first -->
-            <do_all exact="$player_ships.count" counter="$j">
-              <set_value name="$ship" exact="$player_ships.{$j}" />
-              <set_value name="$ship_name" exact="$ship.knownname" />
-
-              <!-- Process MAMS commands if ship name starts with MAMS: -->
-              <set_value name="$mams_pos" exact="$ship_name.{findtext.{$ship_name, 'MAMS:'}}" />
-              <do_if value="$mams_pos == 1">
-                <signal_cue cue="ProcessShipCommand" param="$ship" />
-              </do_if>
-            </do_all>
-
-            <!-- Standard optimization checks -->
-            <do_all exact="$player_ships.count" counter="$i">
-              <set_value name="$ship" exact="$player_ships.{$i}" />
-              <set_value name="$ship_name" exact="$ship.knownname" />
-
-              <!-- Enhanced Debug: Ship details -->
-              <debug_text text="'PP MAMS: Scanning ship: ' + $ship_name + ' (ID: ' + $ship.idcode + ')'" />
-              <debug_text text="'  - Ship purpose: ' + $ship.primarypurpose" />
-              <debug_text text="'  - Pilot exists: ' + $ship.pilot.exists" />
-              <do_if value="$ship.pilot.exists">
-                <debug_text text="'  - Pilot name: ' + $ship.pilot.knownname" />
-                <debug_text text="'  - Pilot skill: ' + $ship.pilot.skill.piloting + '/5'" />
-              </do_if>
-
-              <!-- Skip protected ships -->
-              <set_value name="$protect_pos" exact="$ship_name.{findtext.{$ship_name, 'MAMS:PROTECT'}}" />
-              <do_if value="$protect_pos != 1">
-                <debug_text text="'  - Ship status: Available for optimization'" />
-
-                <!-- Check if ship needs a pilot or has a suboptimal one -->
-                <do_if value="not $ship.pilot.exists or $ship.pilot.skill.piloting lt 3">
-                  <debug_text text="'PP MAMS: Found ship needing better pilot: ' + $ship.knownname" />
-                  <signal_cue cue="ProcessShipForPilotAssignment" param="$ship" />
-                </do_if>
-
-                <!-- Check for very poor pilots that should be fired -->
-                <do_elseif value="$ship.pilot.exists and $ship.pilot.skill.piloting lt 2">
-                  <debug_text text="'PP MAMS: Found underperforming pilot that should be fired: ' + $ship.knownname" />
-                  <signal_cue cue="FireUnderperformingPilot" param="$ship" />
-                </do_elseif>
-
-                <do_else>
-                  <debug_text text="'  - Ship status: Pilot satisfactory (skill ' + $ship.pilot.skill.piloting + ')'" />
-                </do_else>
-              </do_if>
-              <do_else>
-                <debug_text text="'  - Ship status: PROTECTED from automation'" />
-              </do_else>
-            </do_all>
-
-            <signal_cue_instantly cue="CheckTimer" />
-          </actions>
-        </cue>
-      </cues>
     </cue>
 
     <!-- Note: X4 doesn't have event_object_pilot_changed, so we rely on ship acquisition events -->
