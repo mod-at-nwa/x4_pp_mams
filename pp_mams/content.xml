@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v2.04: Testing event_player_owned_killed_object for pilot detection." author="Meldrey" version="204" date="2025-09-29" save="false" enabled="1">
-  <text language="44" description="PP MAMS v2.04: Testing event_player_owned_killed_object for pilot detection." />
+<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v2.05: Enhanced event_player_owned_killed_object with object type analysis." author="Meldrey" version="205" date="2025-09-29" save="false" enabled="1">
+  <text language="44" description="PP MAMS v2.05: Enhanced event_player_owned_killed_object with object type analysis." />
 </content>
