@@ -63,13 +63,11 @@ Edit parameters in `pp_mams/md/pp_mams.xml`:
 
 ## Testing
 
-- **Restart X4** → Load v2.01 (clears cached XML errors)
-- **Manual Commands** → Rename ship to `MAMS:FIRE` to fire pilot immediately
-- **Automatic Detection** → Within 10 seconds, PP MAMS will detect and reassign automatically
-- **Buy a new ship** → Periodic checks will optimize pilots within 10 seconds
-- **Check debug log** → Should show "version 2.01" with detailed pilot scanning information
+- **Restart X4** → Load v1.15 (clears cached XML errors)
+- **Fire a pilot** → Within 30 seconds, PP MAMS will detect and reassign automatically
+- **Buy a new ship** → Periodic checks will optimize pilots within 30 seconds
+- **Check debug log** → Should show "version 1.15" and periodic scanning messages
 - **Monitor notifications** → Assignment confirmations appear when pilots are reassigned
-- **Enhanced Debugging** → Debug log now shows pilot names, skills, and verification results
 
 ## Troubleshooting
 
@@ -83,7 +81,7 @@ Edit parameters in `pp_mams/md/pp_mams.xml`:
 ## Technical Details
 
 - **Mission Director (MD)**: Pure XML-based event handling with periodic monitoring
-- **Automatic Detection**: 10-second interval scanning for suboptimal pilots (skill < 3)
+- **Automatic Detection**: 30-second interval scanning for suboptimal pilots (skill < 3)
 - **Skill Evaluation**: Piloting skill comparison determines optimal candidates
 - **Event Architecture**: Uses `event_cue_signalled` with `delay` for proper timing
 - **Error Handling**: Comprehensive safeguards prevent save corruption
@@ -109,19 +107,6 @@ X4.exe -debug scripts -logfile debuglog.txt
 
 ## Version History
 
-- **v2.01** (2025-09-28): **ENHANCED DEBUG SYSTEM - Comprehensive pilot firing diagnostics!**
-  - **NEW**: Ship name command interface (`MAMS:FIRE`, `MAMS:OPTIMIZE`, `MAMS:PROTECT`)
-  - **ENHANCED**: Massive debug logging improvements with detailed pilot information
-  - **FIXED**: DelayedStart cue structure error that was causing signaling issues
-  - **FIXED**: String manipulation for ship name commands using proper X4 substring syntax
-  - **NEW**: Comprehensive operation verification - confirms pilot assignments actually work
-  - **DEBUG**: Enhanced ship scanning with pilot names, skills, and ship purposes
-  - **DEBUG**: Detailed pilot candidate search logging for both battle ships and PHQ crew
-  - **DEBUG**: Complete pilot firing process logging with before/after verification
-  - **IMPROVED**: 10-second scan interval (reduced from 30) for faster responsiveness
-  - **TECHNICAL**: All operations now have verification checks to detect failures
-  - **USABILITY**: Ship command interface allows manual pilot operations via renaming
-  - Major debugging breakthrough - full visibility into pilot management system!
 - **v1.15** (2025-09-28): **CRITICAL FIX - Pilot firing now works correctly!**
   - **FIXED**: Replaced invalid `remove_object_assignment` with correct `dismiss_pilot` action
   - **FIXED**: Moved standalone `delay` into proper cue structure to prevent XML errors

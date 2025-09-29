@@ -12,7 +12,7 @@
       <actions>
         <debug_text text="'=== PP MAMS: MOD LOADING START ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 2.01'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 1.15'" />
 
         <!-- Initialize global variables -->
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -29,69 +29,43 @@
       <conditions>
         <event_game_loaded />
       </conditions>
-      <delay exact="1s" />
       <actions>
         <debug_text text="'PP MAMS: Starting periodic ship monitoring system'" />
-        <signal_cue cue="CheckTimer" />
+        <signal_cue cue="DelayedStart" />
       </actions>
       <cues>
+        <cue name="DelayedStart">
+          <conditions>
+            <event_cue_signalled />
+          </conditions>
+          <delay exact="1s" />
+          <actions>
+            <signal_cue cue="CheckTimer" />
+          </actions>
+        </cue>
         <cue name="CheckTimer" instantiate="true">
           <conditions>
             <event_cue_signalled />
           </conditions>
-          <delay exact="10s" />
+          <delay exact="30s" />
           <actions>
             <debug_text text="'PP MAMS: Periodic check - scanning fleet for pilot optimization'" />
             <find_object_component name="$player_ships" object="player.galaxy" class="ship" owner="faction.player" space="player.galaxy" />
 
-            <!-- PP MAMS 2.0: Check for ship name commands first -->
-            <do_all exact="$player_ships.count" counter="$j">
-              <set_value name="$ship" exact="$player_ships.{$j}" />
-              <set_value name="$ship_name" exact="$ship.knownname" />
-
-              <!-- Process MAMS commands if ship name starts with MAMS: -->
-              <do_if value="$ship_name.{findtext.{$ship_name, 'MAMS:'}} == 1">
-                <signal_cue cue="ProcessShipCommand" param="$ship" />
-              </do_if>
-            </do_all>
-
-            <!-- Standard optimization checks -->
             <do_all exact="$player_ships.count" counter="$i">
               <set_value name="$ship" exact="$player_ships.{$i}" />
-              <set_value name="$ship_name" exact="$ship.knownname" />
 
-              <!-- Enhanced Debug: Ship details -->
-              <debug_text text="'PP MAMS: Scanning ship: ' + $ship_name + ' (ID: ' + $ship.idcode + ')'" />
-              <debug_text text="'  - Ship purpose: ' + $ship.primarypurpose" />
-              <debug_text text="'  - Pilot exists: ' + $ship.pilot.exists" />
-              <do_if value="$ship.pilot.exists">
-                <debug_text text="'  - Pilot name: ' + $ship.pilot.knownname" />
-                <debug_text text="'  - Pilot skill: ' + $ship.pilot.skill.piloting + '/5'" />
+              <!-- Check if ship needs a pilot or has a suboptimal one -->
+              <do_if value="not $ship.pilot.exists or $ship.pilot.skill.piloting lt 3">
+                <debug_text text="'PP MAMS: Found ship needing better pilot: ' + $ship.knownname" />
+                <signal_cue cue="ProcessShipForPilotAssignment" param="$ship" />
               </do_if>
 
-              <!-- Skip protected ships -->
-              <do_if value="$ship_name.{findtext.{$ship_name, 'MAMS:PROTECT'}} != 1">
-                <debug_text text="'  - Ship status: Available for optimization'" />
-
-                <!-- Check if ship needs a pilot or has a suboptimal one -->
-                <do_if value="not $ship.pilot.exists or $ship.pilot.skill.piloting lt 3">
-                  <debug_text text="'PP MAMS: Found ship needing better pilot: ' + $ship.knownname" />
-                  <signal_cue cue="ProcessShipForPilotAssignment" param="$ship" />
-                </do_if>
-
-                <!-- Check for very poor pilots that should be fired -->
-                <do_elseif value="$ship.pilot.exists and $ship.pilot.skill.piloting lt 2">
-                  <debug_text text="'PP MAMS: Found underperforming pilot that should be fired: ' + $ship.knownname" />
-                  <signal_cue cue="FireUnderperformingPilot" param="$ship" />
-                </do_elseif>
-
-                <do_else>
-                  <debug_text text="'  - Ship status: Pilot satisfactory (skill ' + $ship.pilot.skill.piloting + ')'" />
-                </do_else>
-              </do_if>
-              <do_else>
-                <debug_text text="'  - Ship status: PROTECTED from automation'" />
-              </do_else>
+              <!-- Check for very poor pilots that should be fired -->
+              <do_elseif value="$ship.pilot.exists and $ship.pilot.skill.piloting lt 2">
+                <debug_text text="'PP MAMS: Found underperforming pilot that should be fired: ' + $ship.knownname" />
+                <signal_cue cue="FireUnderperformingPilot" param="$ship" />
+              </do_elseif>
             </do_all>
 
             <signal_cue_instantly cue="CheckTimer" />
@@ -158,55 +132,33 @@
         <set_value name="$best_skill" exact="$current_skill" />
 
         <!-- Search through all player ships for better pilots on non-combat vessels -->
-        <debug_text text="'=== PP MAMS: PILOT SEARCH FOR BATTLE SHIP ==='" />
         <debug_text text="'PP MAMS: Searching player fleet for better pilots...'" />
-        <debug_text text="'  - Target ship: ' + $ship.knownname + ' (combat ship)'" />
-        <debug_text text="'  - Current best skill: ' + $best_skill + '/5'" />
         <find_object_component name="$player_ships" object="player.galaxy" class="ship" owner="faction.player" space="player.galaxy" />
-        <debug_text text="'  - Total ships to check: ' + $player_ships.count" />
 
         <do_all exact="$player_ships.count" counter="$i">
           <set_value name="$candidate_ship" exact="$player_ships.{$i}" />
 
           <!-- Skip if it's the same ship -->
           <do_if value="$candidate_ship != $ship">
-            <debug_text text="'PP MAMS: Checking candidate ship: ' + $candidate_ship.knownname" />
-            <debug_text text="'  - Ship purpose: ' + $candidate_ship.primarypurpose" />
-
             <!-- Check if it's a non-combat ship -->
             <do_if value="$candidate_ship.primarypurpose != purpose.fight">
-              <debug_text text="'  - Non-combat ship - checking pilot...'" />
               <set_value name="$candidate_pilot" exact="$candidate_ship.pilot" />
 
               <do_if value="$candidate_pilot.exists">
                 <set_value name="$candidate_skill" exact="$candidate_pilot.skill.piloting" />
-                <debug_text text="'  - Pilot found: ' + $candidate_pilot.knownname + ' (skill: ' + $candidate_skill + '/5)'" />
+                <debug_text text="'PP MAMS: Found pilot on ' + $candidate_ship.knownname + ' with skill: ' + $candidate_skill" />
 
                 <!-- Check if this pilot is better -->
                 <do_if value="$candidate_skill gt $best_skill">
                   <set_value name="$best_pilot" exact="$candidate_pilot" />
                   <set_value name="$best_ship" exact="$candidate_ship" />
                   <set_value name="$best_skill" exact="$candidate_skill" />
-                  <debug_text text="'  - NEW BEST CANDIDATE: ' + $candidate_pilot.knownname + ' (skill: ' + $best_skill + ')'" />
+                  <debug_text text="'PP MAMS: New best candidate found with skill: ' + $best_skill" />
                 </do_if>
-                <do_else>
-                  <debug_text text="'  - Pilot not better than current best (skill ' + $candidate_skill + ' <= ' + $best_skill + ')'" />
-                </do_else>
               </do_if>
-              <do_else>
-                <debug_text text="'  - No pilot on this ship'" />
-              </do_else>
             </do_if>
-            <do_else>
-              <debug_text text="'  - Combat ship - skipping'" />
-            </do_else>
           </do_if>
-          <do_else>
-            <debug_text text="'  - Same ship as target - skipping'" />
-          </do_else>
         </do_all>
-
-        <debug_text text="'=== PP MAMS: PILOT SEARCH COMPLETE ==='" />
 
         <!-- Perform assignment if we found a better pilot -->
         <do_if value="$best_pilot.exists and $best_ship.exists">
@@ -241,11 +193,7 @@
         <!-- Check for PHQ -->
         <set_value name="$phq" exact="player.headquarters" />
         <do_if value="$phq.exists">
-          <debug_text text="'=== PP MAMS: PHQ CREW SEARCH FOR NON-COMBAT SHIP ==='" />
           <debug_text text="'PP MAMS: PHQ found, searching crew...'" />
-          <debug_text text="'  - Target ship: ' + $ship.knownname + ' (non-combat)'" />
-          <debug_text text="'  - Current best skill: ' + $current_skill + '/5'" />
-          <debug_text text="'  - Total PHQ crew to check: ' + $phq.people.count" />
 
           <!-- Initialize best candidate variables -->
           <set_value name="$best_crew" exact="null" />
@@ -255,29 +203,17 @@
           <do_all exact="$phq.people.count" counter="$i">
             <set_value name="$candidate_crew" exact="$phq.people.{$i}" />
 
-            <debug_text text="'PP MAMS: Checking crew member: ' + $candidate_crew.knownname" />
-            <debug_text text="'  - Combined skill: ' + $candidate_crew.combinedskill" />
-
             <!-- Check if crew member is available (service crew) -->
             <do_if value="$candidate_crew.combinedskill gt 0">
               <set_value name="$candidate_skill" exact="$candidate_crew.skill.piloting" />
-              <debug_text text="'  - Pilot skill: ' + $candidate_skill + '/5'" />
 
               <do_if value="$candidate_skill gt $best_skill">
                 <set_value name="$best_crew" exact="$candidate_crew" />
                 <set_value name="$best_skill" exact="$candidate_skill" />
-                <debug_text text="'  - NEW BEST CREW CANDIDATE: ' + $candidate_crew.knownname + ' (skill: ' + $best_skill + ')'" />
+                <debug_text text="'PP MAMS: Found better crew member with skill: ' + $best_skill" />
               </do_if>
-              <do_else>
-                <debug_text text="'  - Crew not better than current best (skill ' + $candidate_skill + ' <= ' + $best_skill + ')'" />
-              </do_else>
             </do_if>
-            <do_else>
-              <debug_text text="'  - Crew member not available (combined skill <= 0)'" />
-            </do_else>
           </do_all>
-
-          <debug_text text="'=== PP MAMS: PHQ CREW SEARCH COMPLETE ==='" />
 
           <!-- Assign better crew if found -->
           <do_if value="$best_crew.exists">
@@ -312,36 +248,12 @@
         <set_value name="$target_pilot" exact="$target_ship.pilot" />
 
         <!-- Assign new pilot to target ship -->
-        <debug_text text="'PP MAMS: Assigning ' + $new_pilot.knownname + ' to ' + $target_ship.knownname" />
         <assign_control_entity object="$target_ship" actor="$new_pilot" post="controlpost.aipilot" transfer="true" />
-
-        <!-- Verify assignment was successful -->
-        <do_if value="$target_ship.pilot.exists and $target_ship.pilot == $new_pilot">
-          <debug_text text="'PP MAMS: SUCCESS - Pilot assignment verified'" />
-        </do_if>
-        <do_else>
-          <debug_text text="'PP MAMS: WARNING - Pilot assignment may have failed!'" />
-          <do_if value="$target_ship.pilot.exists">
-            <debug_text text="'  - Current pilot: ' + $target_ship.pilot.knownname" />
-          </do_if>
-          <do_else>
-            <debug_text text="'  - No pilot on ship after assignment'" />
-          </do_else>
-        </do_else>
 
         <!-- Assign source ship pilot (if exists) to source ship, otherwise assign old pilot -->
         <do_if value="$source_ship.exists">
           <do_if value="$target_pilot.exists">
-            <debug_text text="'PP MAMS: Assigning ' + $target_pilot.knownname + ' to ' + $source_ship.knownname" />
             <assign_control_entity object="$source_ship" actor="$target_pilot" post="controlpost.aipilot" transfer="true" />
-
-            <!-- Verify swap assignment -->
-            <do_if value="$source_ship.pilot.exists and $source_ship.pilot == $target_pilot">
-              <debug_text text="'PP MAMS: SUCCESS - Swap assignment verified'" />
-            </do_if>
-            <do_else>
-              <debug_text text="'PP MAMS: WARNING - Swap assignment may have failed'" />
-            </do_else>
           </do_if>
         </do_if>
 
@@ -363,22 +275,7 @@
         <debug_text text="'PP MAMS: Promoting crew member to pilot'" />
 
         <!-- Assign new pilot (this automatically removes the old pilot) -->
-        <debug_text text="'PP MAMS: Promoting crew ' + $new_pilot.knownname + ' to pilot on ' + $ship.knownname" />
         <assign_control_entity object="$ship" actor="$new_pilot" post="controlpost.aipilot" transfer="true" />
-
-        <!-- Verify promotion was successful -->
-        <do_if value="$ship.pilot.exists and $ship.pilot == $new_pilot">
-          <debug_text text="'PP MAMS: SUCCESS - Crew promotion verified'" />
-        </do_if>
-        <do_else>
-          <debug_text text="'PP MAMS: WARNING - Crew promotion may have failed!'" />
-          <do_if value="$ship.pilot.exists">
-            <debug_text text="'  - Current pilot: ' + $ship.pilot.knownname" />
-          </do_if>
-          <do_else>
-            <debug_text text="'  - No pilot on ship after promotion'" />
-          </do_else>
-        </do_else>
 
         <!-- User feedback -->
         <signal_cue cue="NotifyPilotAssignment" param="[$ship, $new_pilot, $new_pilot.skill.piloting]" />
@@ -420,31 +317,14 @@
         <set_value name="$ship" exact="event.param" />
         <set_value name="$pilot" exact="$ship.pilot" />
 
-        <debug_text text="'=== PP MAMS: PILOT FIRING PROCESS START ==='" />
-        <debug_text text="'PP MAMS: Target ship: ' + $ship.knownname + ' (ID: ' + $ship.idcode + ')'" />
+        <debug_text text="'PP MAMS: Firing underperforming pilot from ' + $ship.knownname" />
 
         <do_if value="$pilot.exists">
           <set_value name="$pilot_name" exact="$pilot.knownname" />
           <set_value name="$pilot_skill" exact="$pilot.skill.piloting" />
 
-          <debug_text text="'PP MAMS: FIRING PILOT - Details:'" />
-          <debug_text text="'  - Pilot name: ' + $pilot_name" />
-          <debug_text text="'  - Pilot skill: ' + $pilot_skill + '/5'" />
-          <debug_text text="'  - Ship: ' + $ship.knownname" />
-
           <!-- Remove the pilot using the correct dismiss_pilot action -->
-          <debug_text text="'PP MAMS: Executing dismiss_pilot command...'" />
           <dismiss_pilot object="$ship" />
-          <debug_text text="'PP MAMS: dismiss_pilot command completed'" />
-
-          <!-- Verify pilot was actually removed -->
-          <do_if value="not $ship.pilot.exists">
-            <debug_text text="'PP MAMS: SUCCESS - Pilot successfully removed from ship'" />
-          </do_if>
-          <do_else>
-            <debug_text text="'PP MAMS: WARNING - Pilot still exists on ship after dismiss_pilot!'" />
-            <debug_text text="'  - Current pilot: ' + $ship.pilot.knownname" />
-          </do_else>
 
           <!-- User feedback for firing -->
           <set_value name="$message" exact="'Fired underperforming pilot from ' + $ship.knownname + ': ' + $pilot_name + ' (Skill: ' + $pilot_skill + ')'" />
@@ -460,17 +340,13 @@
           </do_if>
 
           <debug_text text="'PP MAMS: ' + $message" />
-          <debug_text text="'PP MAMS: Attempting to find replacement pilot...'" />
 
           <!-- Try to assign a better pilot immediately -->
           <signal_cue cue="ProcessShipForPilotAssignment" param="$ship" />
         </do_if>
         <do_else>
-          <debug_text text="'PP MAMS: ERROR - No pilot to fire on ship: ' + $ship.knownname" />
-          <debug_text text="'  - Ship pilot exists: ' + $ship.pilot.exists" />
+          <debug_text text="'PP MAMS: No pilot to fire on ship: ' + $ship.knownname" />
         </do_else>
-
-        <debug_text text="'=== PP MAMS: PILOT FIRING PROCESS END ==='" />
       </actions>
     </cue>
 
@@ -497,57 +373,159 @@
       </actions>
     </cue>
 
-    <!-- PP MAMS 2.0: Ship Command Processor -->
-    <cue name="ProcessShipCommand">
+    <!-- Pilot Communication Enhancement -->
+    <cue name="PilotCommunicationHandler" instantiate="true">
       <conditions>
-        <event_cue_signalled />
+        <event_conversation_started />
       </conditions>
       <actions>
-        <set_value name="$ship" exact="event.param" />
-        <set_value name="$ship_name" exact="$ship.knownname" />
-        <set_value name="$original_name" exact="$ship_name" />
+        <set_value name="$actor" exact="event.param" />
+        <set_value name="$pilot" exact="$actor" />
+        <set_value name="$ship" exact="null" />
 
-        <debug_text text="'=== PP MAMS 2.0: SHIP COMMAND PROCESSING START ==='" />
-        <debug_text text="'PP MAMS 2.0: Processing command for ship: ' + $ship_name" />
-
-        <!-- Extract command from ship name -->
-        <do_if value="$ship_name.{findtext.{$ship_name, 'MAMS:'}} == 1">
-          <debug_text text="'PP MAMS 2.0: MAMS command detected in ship name'" />
-          <!-- Process OPTIMIZE command -->
-          <do_if value="$ship_name.{findtext.{$ship_name, 'MAMS:OPTIMIZE'}} == 1">
-            <debug_text text="'PP MAMS 2.0: OPTIMIZE command detected'" />
-            <show_notification caption="'PP MAMS 2.0'" text="'Optimizing pilot for ' + $ship.knownname" />
-            <signal_cue cue="ProcessShipForPilotAssignment" param="$ship" />
-            <!-- Restore original name by removing MAMS:OPTIMIZE prefix -->
-            <set_value name="$new_name" exact="$ship_name.{substring.{$ship_name, 14}}" />
-            <debug_text text="'PP MAMS 2.0: Renaming ship from ' + $ship_name + ' to ' + $new_name" />
-            <set_object_name object="$ship" name="$new_name" />
-          </do_if>
-
-          <!-- Process FIRE command -->
-          <do_elseif value="$ship_name.{findtext.{$ship_name, 'MAMS:FIRE'}} == 1">
-            <debug_text text="'PP MAMS 2.0: FIRE command detected'" />
-            <show_notification caption="'PP MAMS 2.0'" text="'Firing pilot from ' + $ship.knownname" />
-            <signal_cue cue="FireUnderperformingPilot" param="$ship" />
-            <!-- Restore original name by removing MAMS:FIRE prefix -->
-            <set_value name="$new_name" exact="$ship_name.{substring.{$ship_name, 11}}" />
-            <debug_text text="'PP MAMS 2.0: Renaming ship from ' + $ship_name + ' to ' + $new_name" />
-            <set_object_name object="$ship" name="$new_name" />
-          </do_elseif>
-
-          <!-- Process PROTECT command -->
-          <do_elseif value="$ship_name.{findtext.{$ship_name, 'MAMS:PROTECT'}} == 1">
-            <debug_text text="'PP MAMS 2.0: PROTECT command detected - ship excluded from automation'" />
-            <show_notification caption="'PP MAMS 2.0'" text="'Ship ' + $ship.knownname + ' protected from automation'" />
-            <!-- Keep MAMS:PROTECT in name as permanent marker -->
-          </do_elseif>
+        <!-- Try to get the ship from the actor -->
+        <do_if value="$pilot.exists">
+          <set_value name="$ship" exact="$pilot.ship" />
         </do_if>
-        <do_else>
-          <debug_text text="'PP MAMS 2.0: No MAMS command found in ship name'" />
-        </do_else>
 
-        <debug_text text="'=== PP MAMS 2.0: SHIP COMMAND PROCESSING END ==='" />
+        <!-- Check if this is a player pilot on a player ship -->
+        <do_if value="$pilot.exists and $ship.exists and $ship.owner == faction.player and $pilot.controlpost == controlpost.aipilot">
+          <debug_text text="'PP MAMS: Player communicating with pilot ' + $pilot.knownname + ' on ' + $ship.knownname" />
+
+          <!-- Add PP MAMS management options to pilot conversation -->
+          <add_player_choice_sub text="'[PP MAMS] Request pilot reassignment for this ship'" section="pp_mams_reassign_pilot" />
+          <add_player_choice_sub text="'[PP MAMS] Request skill assessment'" section="pp_mams_pilot_assessment" />
+          <add_player_choice_sub text="'[PP MAMS] Optimize entire fleet assignments'" section="pp_mams_fleet_optimize" />
+        </do_if>
       </actions>
+
+      <cues>
+        <!-- Reassign Pilot Option -->
+        <cue name="ReassignPilot">
+          <conditions>
+            <event_conversation_returned_to_section section="pp_mams_reassign_pilot" />
+          </conditions>
+          <actions>
+            <set_value name="$pilot" exact="event.param" />
+            <set_value name="$ship" exact="$pilot.ship" />
+
+            <debug_text text="'PP MAMS: Player requested reassignment for ship ' + $ship.knownname" />
+
+            <!-- Add confirmation dialogue -->
+            <add_conversation_view text="'I understand. The personnel management system will evaluate if there is a better assignment for this ship and for me. Shall I proceed?'" speaker="other" />
+            <add_player_choice text="'Yes, initiate reassignment analysis.'" position="1" section="pp_mams_confirm_reassign" />
+            <add_player_choice text="'No, maintain current assignment.'" position="2" section="pp_mams_cancel_reassign" />
+          </actions>
+        </cue>
+
+        <!-- Confirm Reassignment -->
+        <cue name="ConfirmReassignPilot">
+          <conditions>
+            <event_conversation_returned_to_section section="pp_mams_confirm_reassign" />
+          </conditions>
+          <actions>
+            <set_value name="$pilot" exact="event.param" />
+            <set_value name="$ship" exact="$pilot.ship" />
+
+            <debug_text text="'PP MAMS: Player confirmed reassignment for ship ' + $ship.knownname" />
+
+            <!-- Trigger the assignment system for this specific ship -->
+            <signal_cue cue="parent.parent.ProcessShipForPilotAssignment" param="$ship" />
+
+            <add_conversation_view text="'Assignment analysis initiated. If a better pilot is found, we will handle the transition seamlessly. Thank you.'" speaker="other" />
+            <end_conversation />
+          </actions>
+        </cue>
+
+        <!-- Cancel Reassignment -->
+        <cue name="CancelReassignPilot">
+          <conditions>
+            <event_conversation_returned_to_section section="pp_mams_cancel_reassign" />
+          </conditions>
+          <actions>
+            <add_conversation_view text="'Understood. I will continue in my current role. Please let me know if you need anything else.'" speaker="other" />
+            <!-- Return to main conversation -->
+          </actions>
+        </cue>
+
+        <!-- Pilot Assessment Option -->
+        <cue name="PilotAssessment">
+          <conditions>
+            <event_conversation_returned_to_section section="pp_mams_pilot_assessment" />
+          </conditions>
+          <actions>
+            <set_value name="$pilot" exact="event.param" />
+            <set_value name="$ship" exact="$pilot.ship" />
+            <set_value name="$skill" exact="$pilot.skill.piloting" />
+            <set_value name="$combat" exact="$pilot.skill.combat" />
+            <set_value name="$combined" exact="$pilot.combinedskill" />
+
+            <debug_text text="'PP MAMS: Player requested assessment from pilot ' + $pilot.knownname" />
+
+            <!-- Generate skill-based response -->
+            <do_if value="$skill ge 4">
+              <set_value name="$response" exact="'I am highly experienced with a piloting skill of ' + $skill + ' and combat rating of ' + $combat + '. I perform well in any assignment.'" />
+            </do_if>
+            <do_elseif value="$skill ge 3">
+              <set_value name="$response" exact="'I have good experience with piloting skill ' + $skill + ' and combat rating ' + $combat + '. I am effective in most situations.'" />
+            </do_elseif>
+            <do_elseif value="$skill ge 2">
+              <set_value name="$response" exact="'I have moderate skills - piloting ' + $skill + ', combat ' + $combat + '. I do my best but recognize I could improve.'" />
+            </do_elseif>
+            <do_else>
+              <set_value name="$response" exact="'I admit my skills are limited - piloting ' + $skill + ', combat ' + $combat + '. Perhaps I would serve better elsewhere until I improve.'" />
+            </do_else>
+
+            <add_conversation_view text="$response" speaker="other" />
+
+            <!-- Write assessment to logbook -->
+            <write_to_logbook category="general" title="'PP MAMS Pilot Assessment'" text="'Pilot ' + $pilot.knownname + ' on ' + $ship.knownname + ': Piloting ' + $skill + ', Combat ' + $combat + ', Combined ' + $combined" />
+          </actions>
+        </cue>
+
+        <!-- Fleet Optimization Option -->
+        <cue name="FleetOptimization">
+          <conditions>
+            <event_conversation_returned_to_section section="pp_mams_fleet_optimize" />
+          </conditions>
+          <actions>
+            <debug_text text="'PP MAMS: Player requested full fleet optimization via pilot conversation'" />
+
+            <add_conversation_view text="'Initiating comprehensive fleet pilot optimization. This will analyze all ships and reassign pilots for maximum efficiency. Proceed?'" speaker="other" />
+            <add_player_choice text="'Yes, optimize the entire fleet.'" position="1" section="pp_mams_confirm_fleet_optimize" />
+            <add_player_choice text="'No, cancel optimization.'" position="2" section="pp_mams_cancel_fleet_optimize" />
+          </actions>
+        </cue>
+
+        <!-- Confirm Fleet Optimization -->
+        <cue name="ConfirmFleetOptimization">
+          <conditions>
+            <event_conversation_returned_to_section section="pp_mams_confirm_fleet_optimize" />
+          </conditions>
+          <actions>
+            <debug_text text="'PP MAMS: Player confirmed full fleet optimization'" />
+
+            <add_conversation_view text="'Fleet-wide optimization commencing. All pilots will be evaluated and reassigned for optimal performance. This may take a moment.'" speaker="other" />
+
+            <!-- Trigger immediate fleet scan -->
+            <signal_cue_instantly cue="parent.parent.PeriodicShipCheck.CheckTimer" />
+
+            <add_conversation_view text="'Optimization complete. Check your logbook and notifications for assignment changes.'" speaker="other" />
+            <end_conversation />
+          </actions>
+        </cue>
+
+        <!-- Cancel Fleet Optimization -->
+        <cue name="CancelFleetOptimization">
+          <conditions>
+            <event_conversation_returned_to_section section="pp_mams_cancel_fleet_optimize" />
+          </conditions>
+          <actions>
+            <add_conversation_view text="'Fleet optimization cancelled. Current assignments will remain unchanged.'" speaker="other" />
+            <!-- Return to main conversation -->
+          </actions>
+        </cue>
+      </cues>
     </cue>
 
   </cues>
