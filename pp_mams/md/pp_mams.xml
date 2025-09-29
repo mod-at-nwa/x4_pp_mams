@@ -10,16 +10,16 @@
         <event_game_loaded />
       </conditions>
       <actions>
-        <debug_text text="'=== PP MAMS v3.0: SIMPLE SCANNER LOADING ==='" />
+        <debug_text text="'=== PP MAMS v3.04: CORRECTED SCANNER LOADING ==='" />
         <debug_text text="'PP MAMS: Mod loaded and initialized successfully!'" />
-        <debug_text text="'PP MAMS: Init cue executed - version 3.01'" />
+        <debug_text text="'PP MAMS: Init cue executed - version 3.04'" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
         <set_value name="global.$pp_mams_debug" exact="true" />
 
-        <show_notification caption="'PP MAMS v3.0 Loaded'" text="'Simple fleet scanner active'" />
-        <write_to_logbook category="general" title="'PP MAMS v3.0 Loaded'" text="'PP MAMS: Simple fleet scanner ready'" />
-        <debug_text text="'=== PP MAMS v3.0: LOADING COMPLETE ==='" />
+        <show_notification caption="'PP MAMS v3.04 Loaded'" text="'Corrected pilot detection active'" />
+        <write_to_logbook category="general" title="'PP MAMS v3.04 Loaded'" text="'PP MAMS: find_object_component scanner ready'" />
+        <debug_text text="'=== PP MAMS v3.04: LOADING COMPLETE ==='" />
       </actions>
     </cue>
 
@@ -30,8 +30,8 @@
       </conditions>
       <delay exact="5s" />
       <actions>
-        <debug_text text="'PP MAMS: Starting fleet scanner - first scan in 5 seconds'" />
-        <show_notification caption="'PP MAMS Scanner'" text="'Fleet scanner starting in 5 seconds'" />
+        <debug_text text="'PP MAMS: Starting corrected scanner - first scan in 5 seconds'" />
+        <show_notification caption="'PP MAMS Scanner'" text="'Corrected scanner starting in 5 seconds'" />
       </actions>
       <cues>
         <cue name="ScanLoop" instantiate="true">
@@ -49,22 +49,38 @@
             <set_value name="$deficit_count" exact="0" />
             <set_value name="$total_ships" exact="0" />
 
-            <find_object_component name="$player_ships" object="player.galaxy" class="ship" owner="faction.player" space="player.galaxy" />
-            <set_value name="$total_ships" exact="$player_ships.count" />
+            <!-- Corrected Method: find_object_component (proven to work) -->
+            <debug_text text="'PP MAMS: Using find_object_component to find player ships...'" />
+            <find_object_component name="$player_ships" space="player.galaxy" owner="faction.player" class="class.ship" multiple="true" />
 
-            <do_all exact="$player_ships.count" counter="$i">
-              <set_value name="$ship" exact="$player_ships.{$i}" />
-              <do_if value="not $ship.pilot.exists">
-                <set_value name="$deficit_count" exact="$deficit_count + 1" />
-                <debug_text text="'PP MAMS: PILOT DEFICIT - ' + $ship.knownname" />
-              </do_if>
-            </do_all>
+            <do_if value="$player_ships" and="$player_ships.exists">
+              <set_value name="$total_ships" exact="@$player_ships.count" />
+              <debug_text text="'PP MAMS: Found ' + $total_ships + ' player ships'" />
+
+              <do_all exact="$total_ships" counter="$i">
+                <set_value name="$ship" exact="$player_ships.{$i}" />
+                <debug_text text="'PP MAMS: Checking ship ' + @$ship.knownname + ' (' + @$ship.id + ')'" />
+
+                <!-- Check pilot using proven pattern from working mods -->
+                <do_if value="$ship.pilot" and="$ship.pilot.exists">
+                  <debug_text text="'PP MAMS: Ship ' + @$ship.knownname + ' has pilot: ' + @$ship.pilot.knownname" />
+                </do_if>
+                <do_else>
+                  <set_value name="$deficit_count" exact="$deficit_count + 1" />
+                  <debug_text text="'PP MAMS: PILOT DEFICIT DETECTED - ' + @$ship.knownname + ' (' + @$ship.id + ') has no pilot'" />
+                </do_else>
+              </do_all>
+            </do_if>
+            <do_else>
+              <debug_text text="'PP MAMS: find_object_component returned null or no player ships found'" />
+            </do_else>
 
             <debug_text text="'PP MAMS: Scan complete - ' + $deficit_count + ' deficits in ' + $total_ships + ' ships'" />
 
             <do_if value="$deficit_count gt 0">
               <set_value name="$message" exact="'PP MAMS: ' + $deficit_count + ' pilot deficit(s) detected'" />
               <show_notification caption="'PP MAMS Alert'" text="$message" />
+              <write_to_logbook category="general" title="'PP MAMS Alert'" text="'PP MAMS: ' + $deficit_count + ' pilot deficit(s) detected'" />
             </do_if>
             <do_else>
               <show_notification caption="'PP MAMS Scan'" text="'All ships have pilots'" />
