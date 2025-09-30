@@ -171,7 +171,53 @@ After extensive research and extraction of X4's game files, we discovered the **
   - `/md/conversations.xml` - Contains LogFired/LogHired cues
   - `scriptproperties.html` - Script property documentation
 
-## Current Development Status (v3.26)
+## Current Development Status (v3.34)
+
+**IN PROGRESS - Crew Access API Discovery**
+
+### Critical Findings: Accessing npctemplateentry Data
+
+After extensive testing (v3.28 - v3.34), we've discovered the challenges with accessing crew template data:
+
+**What Works:**
+- ✅ `ship.people.list` returns an iterable collection
+- ✅ `ship.people.count` returns accurate crew count
+- ✅ Event-driven pilot firing detection via `event_conversation_next_section`
+- ✅ Ship identification and properties fully accessible
+
+**What Doesn't Work (Tested & Failed):**
+- ❌ **Direct property access**: `$crew.name`, `$crew.role`, `$crew.potentialskill` → all return null
+- ❌ **Via ship accessor**: `$ship.people.{$crew}.name` → returns null
+- ❌ **Index-based**: `$ship.people.list.{1}.name` → returns null
+- ❌ **do_for_each iteration**: Gives us something to iterate but can't read properties
+
+**Testing History:**
+- **v3.31-3.33**: Multi-hypothesis tests - all accessor patterns returned null
+- **v3.34**: Yoshiko Ueda tracker + dual accessor pattern test (both failed)
+- **Next (v3.35)**: Test documented pattern from API reference
+
+### API Reference Pattern (v3.35)
+
+From X4_API_REFERENCE.md, the documented method uses:
+```xml
+<set_value name="$crew_list" exact="$ship.people.list" />
+<do_all exact="$crew_list.count" counter="$i">
+  <set_value name="$crew" exact="$crew_list.{$i}" />
+  <!-- $crew should be npctemplateentry -->
+</do_all>
+```
+
+**Key differences from our tests:**
+1. Store list in variable first (not iterate directly)
+2. Use `do_all` with counter (not `do_for_each`)
+3. Index may be 0-based or 1-based (need to test both)
+
+### Known Working Alternatives
+- `ship.roleentities` - Returns entity objects (mostly empty for template crew)
+- `ship.pilot` - Direct access to current pilot entity
+- Manager filtering requires entity objects with `.controlpost` property
+
+## Current Development Status (v3.26) - ARCHIVED
 
 **IN PROGRESS - API Discovery & Personnel List Access**
 
@@ -202,14 +248,16 @@ For **trade ships** (when pilot fired):
 1. Search through all personnel
 2. Sort by captain/pilot skill
 3. Exclude all who are already captains (leaves skilled crewmembers)
-4. Pick highest and reassign to captain
+4. **EXCLUDE ALL MANAGERS** (station managers are never to be touched)
+5. Pick highest and reassign to captain
 
 For **military ships** (when pilot fired):
 1. Search through all personnel
 2. Sort by captain/pilot skill
 3. Exclude all military ships
-4. Pick highest and reassign to captain
-5. If a trade ship was de-captained, use trade ship logic to replace them
+4. **EXCLUDE ALL MANAGERS** (station managers are never to be touched)
+5. Pick highest and reassign to captain
+6. If a trade ship was de-captained, use trade ship logic to replace them
 
 **What We're Testing:**
 - v3.26 samples 5 NPCs from the 2102 to see their actual typenames

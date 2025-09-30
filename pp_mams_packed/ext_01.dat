@@ -10,36 +10,158 @@
         <event_game_loaded />
       </conditions>
       <actions>
-        <set_value name="$version" exact="'3.26'" />
+        <set_value name="$version" exact="'3.35'" />
         <set_value name="$method" exact="'event_conversation_next_section'" />
 
         <debug_text text="'=== PP MAMS v' + $version + ': Using ' + $method + ' ==='" />
-        <debug_text text="'PP MAMS: Event-driven detection via conversation sections!'" />
+        <debug_text text="'PP MAMS: TEST 5 - DOCUMENTED API PATTERN!'" />
         <debug_text text="'PP MAMS: Init cue executed - version ' + $version" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
         <set_value name="global.$pp_mams_debug" exact="true" />
         <set_value name="global.$pp_mams_version" exact="$version" />
 
-        <show_notification caption="'PP MAMS v' + $version + ' Loaded'" text="'Event-driven conversation monitoring active!'" />
-        <write_to_logbook category="general" title="'PP MAMS v' + $version + ' Loaded'" text="'Using ' + $method + ' for instant pilot fire detection!'" />
+        <show_notification caption="'PP MAMS v' + $version + ' Loaded'" text="'TEST 5: do_all + counter (0-based + 1-based)!'" />
+        <write_to_logbook category="general" title="'PP MAMS v' + $version + ' Loaded'" text="'Testing documented API pattern: store list + do_all with counter!'" />
         <debug_text text="'=== PP MAMS v' + $version + ': LOADING COMPLETE ==='" />
 
-        <!-- API DISCOVERY: Test personnel filtering -->
-        <debug_text text="'PP MAMS: === TESTING PERSONNEL FILTERING ==='" />
+        <!-- API DISCOVERY v4: MULTI-HYPOTHESIS TEST BATTERY -->
+        <debug_text text="'PP MAMS: === MULTI-HYPOTHESIS TEST BATTERY ==='" />
 
-        <!-- Get all NPCs -->
-        <find_object name="$all_npcs" class="npc" owner="faction.player" multiple="true" />
-        <debug_text text="'PP MAMS: Total NPCs: ' + $all_npcs.count" />
+        <!-- Get all player ships -->
+        <find_object name="$all_ships" class="ship" owner="faction.player" multiple="true" />
+        <debug_text text="'PP MAMS: Total objects: ' + $all_ships.count" />
 
-        <!-- Sample typenames to understand what we're dealing with -->
-        <debug_text text="'PP MAMS: Sampling NPC typenames...'" />
-        <debug_text text="'PP MAMS: NPC 1: ' + @$all_npcs.{1}.typename + ' / ' + @$all_npcs.{1}.knownname + ' / container: ' + @$all_npcs.{1}.container.knownname" />
-        <debug_text text="'PP MAMS: NPC 10: ' + @$all_npcs.{10}.typename + ' / ' + @$all_npcs.{10}.knownname + ' / container: ' + @$all_npcs.{10}.container.knownname" />
-        <debug_text text="'PP MAMS: NPC 50: ' + @$all_npcs.{50}.typename + ' / ' + @$all_npcs.{50}.knownname + ' / container: ' + @$all_npcs.{50}.container.knownname" />
-        <debug_text text="'PP MAMS: NPC 100: ' + @$all_npcs.{100}.typename + ' / ' + @$all_npcs.{100}.knownname + ' / container: ' + @$all_npcs.{100}.container.knownname" />
-        <debug_text text="'PP MAMS: NPC 500: ' + @$all_npcs.{500}.typename + ' / ' + @$all_npcs.{500}.knownname + ' / container: ' + @$all_npcs.{500}.container.knownname" />
+        <!-- Find first ship WITH crew -->
+        <set_value name="$test_ship" exact="null" />
+        <do_all exact="$all_ships.count" counter="$i">
+          <do_if value="$all_ships.{$i}.people.count gt 0">
+            <set_value name="$test_ship" exact="$all_ships.{$i}" />
+            <break/>
+          </do_if>
+        </do_all>
+
+        <do_if value="$test_ship">
+          <debug_text text="'PP MAMS: === Test Ship: ' + @$test_ship.knownname + ' ==='" />
+          <debug_text text="'PP MAMS:   people.count: ' + $test_ship.people.count" />
+          <debug_text text="'PP MAMS:   pilot: ' + @$test_ship.pilot.knownname" />
+
+          <!-- TEST 5: Documented API pattern - store list first, use do_all with counter -->
+          <debug_text text="'PP MAMS: --- TEST 5: Documented API Pattern ---'" />
+          <set_value name="$crew_list" exact="$test_ship.people.list" />
+          <debug_text text="'PP MAMS: Stored list, count: ' + $crew_list.count" />
+
+          <!-- Test first 3 crew with 0-based indexing -->
+          <debug_text text="'PP MAMS: Testing 0-based indexing (index 0, 1, 2):'" />
+          <do_all exact="3" counter="$i">
+            <set_value name="$crew" exact="$crew_list.{$i}" />
+            <debug_text text="'PP MAMS: Crew[' + $i + '] 0-based:'" />
+            <debug_text text="'  name: ' + @$crew.name" />
+            <debug_text text="'  role: ' + @$crew.role" />
+            <debug_text text="'  pilot skill: ' + @$crew.potentialskill.{controlpost.aipilot}" />
+            <debug_text text="'  combinedskill: ' + @$crew.combinedskill" />
+          </do_all>
+
+          <!-- Test first 3 crew with 1-based indexing -->
+          <debug_text text="'PP MAMS: Testing 1-based indexing (index 1, 2, 3):'" />
+          <do_all exact="3" counter="$j">
+            <set_value name="$crew" exact="$crew_list.{$j+1}" />
+            <debug_text text="'PP MAMS: Crew[' + ($j+1) + '] 1-based:'" />
+            <debug_text text="'  name: ' + @$crew.name" />
+            <debug_text text="'  role: ' + @$crew.role" />
+            <debug_text text="'  pilot skill: ' + @$crew.potentialskill.{controlpost.aipilot}" />
+            <debug_text text="'  combinedskill: ' + @$crew.combinedskill" />
+          </do_all>
+
+          <debug_text text="'PP MAMS: === TEST 5 COMPLETE ==='" />
+        </do_if>
+        <do_else>
+          <debug_text text="'PP MAMS: No ships with crew found for testing!'" />
+        </do_else>
+
+        <!-- YOSHIKO UEDA TRACKER: Find and track her location -->
+        <debug_text text="'PP MAMS: === YOSHIKO UEDA TRACKER INIT ==='" />
+        <set_value name="$yoshiko_found" exact="false" />
+        <set_value name="global.$yoshiko_ship" exact="null" />
+        <set_value name="global.$yoshiko_last_ship" exact="null" />
+
+        <!-- Search all ships for Yoshiko Ueda -->
+        <do_all exact="$all_ships.count" counter="$y">
+          <set_value name="$check_ship" exact="$all_ships.{$y}" />
+          <do_if value="$check_ship.people.count gt 0">
+            <!-- Check if pilot is Yoshiko -->
+            <do_if value="$check_ship.pilot.exists and $check_ship.pilot.knownname == 'Yoshiko Ueda'">
+              <set_value name="global.$yoshiko_ship" exact="$check_ship" />
+              <set_value name="global.$yoshiko_last_ship" exact="$check_ship" />
+              <set_value name="$yoshiko_found" exact="true" />
+              <debug_text text="'PP MAMS: YOSHIKO FOUND as pilot on: ' + @$check_ship.knownname + ' (' + @$check_ship.idcode + ')'" />
+              <break/>
+            </do_if>
+          </do_if>
+        </do_all>
+
+        <do_if value="not $yoshiko_found">
+          <debug_text text="'PP MAMS: Yoshiko Ueda not found as pilot in fleet'" />
+        </do_if>
+        <do_else>
+          <show_notification caption="'PP MAMS: Yoshiko Tracker'" text="'Found Yoshiko on ' + @global.$yoshiko_ship.knownname" />
+        </do_else>
+        <debug_text text="'PP MAMS: === YOSHIKO TRACKER INIT COMPLETE ==='" />
       </actions>
+    </cue>
+
+    <!-- YOSHIKO TRACKER: Periodic location check -->
+    <cue name="YoshikoTracker" instantiate="true">
+      <conditions>
+        <event_game_loaded />
+      </conditions>
+      <delay exact="10s" />
+      <cues>
+        <cue name="YoshikoCheckLoop" instantiate="true">
+          <conditions>
+            <check_any>
+              <event_cue_completed cue="parent" />
+              <event_cue_completed cue="YoshikoCheckLoop" />
+            </check_any>
+          </conditions>
+          <delay exact="5s" />
+          <actions>
+            <do_if value="global.$yoshiko_ship and global.$yoshiko_ship.exists">
+              <!-- Check if Yoshiko is still the pilot -->
+              <do_if value="global.$yoshiko_ship.pilot.exists and global.$yoshiko_ship.pilot.knownname == 'Yoshiko Ueda'">
+                <!-- Still on same ship, no change -->
+              </do_if>
+              <do_else>
+                <!-- Yoshiko moved! Log the transfer -->
+                <debug_text text="'PP MAMS: YOSHIKO TRANSFER DETECTED!'" />
+                <debug_text text="'PP MAMS:   Previous ship: ' + @global.$yoshiko_last_ship.knownname + ' (' + @global.$yoshiko_last_ship.idcode + ')'" />
+                <debug_text text="'PP MAMS:   Yoshiko no longer pilot on: ' + @global.$yoshiko_ship.knownname" />
+
+                <!-- Search for her new location -->
+                <find_object name="$search_ships" class="ship" owner="faction.player" multiple="true" />
+                <set_value name="$found_new" exact="false" />
+                <do_all exact="$search_ships.count" counter="$s">
+                  <set_value name="$scan" exact="$search_ships.{$s}" />
+                  <do_if value="$scan.pilot.exists and $scan.pilot.knownname == 'Yoshiko Ueda'">
+                    <set_value name="global.$yoshiko_last_ship" exact="global.$yoshiko_ship" />
+                    <set_value name="global.$yoshiko_ship" exact="$scan" />
+                    <set_value name="$found_new" exact="true" />
+                    <debug_text text="'PP MAMS:   New ship: ' + @$scan.knownname + ' (' + @$scan.idcode + ')'" />
+                    <show_notification caption="'YOSHIKO TRANSFER!'" text="'From ' + @global.$yoshiko_last_ship.knownname + ' to ' + @$scan.knownname" />
+                    <write_to_logbook category="general" title="'PP MAMS: Yoshiko Transfer'" text="'Yoshiko moved from ' + @global.$yoshiko_last_ship.knownname + ' to ' + @$scan.knownname" />
+                    <break/>
+                  </do_if>
+                </do_all>
+
+                <do_if value="not $found_new">
+                  <debug_text text="'PP MAMS:   Yoshiko not found as pilot anywhere (may be fired or reassigned to non-pilot role)'" />
+                  <set_value name="global.$yoshiko_ship" exact="null" />
+                </do_if>
+              </do_else>
+            </do_if>
+          </actions>
+        </cue>
+      </cues>
     </cue>
 
     <!-- EVENT-DRIVEN: Listen for fire conversation section -->
@@ -71,22 +193,95 @@
           <debug_text text="'PP MAMS:   ship.knownname: ' + @$ship.knownname" />
           <debug_text text="'PP MAMS:   ship.pilot.exists: ' + $ship.pilot.exists" />
           <debug_text text="'PP MAMS:   ship.pilot.knownname: ' + @$ship.pilot.knownname" />
-          <debug_text text="'PP MAMS: --- Test Conditions ---'" />
-          <debug_text text="'PP MAMS:   typename==pilot: ' + ($fired_npc.typename == 'pilot')" />
-          <debug_text text="'PP MAMS:   entityrole==pilot: ' + ($fired_npc.entityrole == entityrole.pilot)" />
-          <debug_text text="'PP MAMS:   post==aipilot: ' + ($fired_npc.post == controlpost.aipilot)" />
-          <debug_text text="'PP MAMS:   has piloting skill: ' + ($fired_npc.combinedskill.{skill.piloting} gt 0)" />
+          <!-- DETECTION: Pilot firing confirmed -->
+          <do_if value="$fired_npc.typename == 'Crewman' or $fired_npc.typename == 'Crewwoman'">
+            <show_notification caption="'PP MAMS Alert!'" text="'Pilot fired from ' + @$ship.knownname + '!'" />
+            <write_to_logbook category="general" title="'PP MAMS: Pilot Deficit'" text="'Ship ' + @$ship.knownname + ' ('+@$ship.idcode+') fired pilot: ' + @$fired_npc.knownname" />
+            <debug_text text="'PP MAMS: Pilot firing confirmed for ' + @$ship.knownname + ' - searching for replacement'" />
 
-          <!-- ORIGINAL CHECK: Keep for comparison -->
-          <do_if value="$fired_npc.typename == 'pilot'">
-            <show_notification caption="'PP MAMS Alert (typename)!'" text="'Pilot fired from ' + @$ship.knownname + '!'" />
-            <write_to_logbook category="general" title="'PP MAMS: Pilot Deficit (typename)'" text="'Ship ' + @$ship.knownname + ' fired pilot: ' + @$fired_npc.knownname" />
-          </do_if>
+            <!-- REPLACEMENT LOGIC v2: Template-based assignment -->
+            <set_value name="$target_ship" exact="$ship" />
+            <set_value name="$candidate_templates" exact="[]" />
+            <set_value name="$candidate_ships" exact="[]" />
+            <set_value name="$candidate_skills" exact="[]" />
+            <debug_text text="'PP MAMS: Building template candidate pool from all ships...'" />
 
-          <!-- TEST: Alternative checks -->
-          <do_if value="$fired_npc.entityrole == entityrole.pilot">
-            <show_notification caption="'PP MAMS Alert (entityrole)!'" text="'Pilot fired from ' + @$ship.knownname + '!'" />
-            <write_to_logbook category="general" title="'PP MAMS: Pilot Deficit (entityrole)'" text="'Ship ' + @$ship.knownname + ' fired pilot: ' + @$fired_npc.knownname" />
+            <!-- Find all player ships -->
+            <find_object name="$all_ships" class="ship" owner="faction.player" multiple="true" />
+            <debug_text text="'PP MAMS: Scanning ' + $all_ships.count + ' player-owned objects'" />
+
+            <!-- Get manager template from target ship (to exclude) -->
+            <set_value name="$target_manager" exact="$target_ship.controlentity.{controlpost.manager}.npctemplate" />
+
+            <!-- Build candidate pool using template iteration -->
+            <do_all exact="$all_ships.count" counter="$i">
+              <set_value name="$scan_ship" exact="$all_ships.{$i}" />
+
+              <!-- Only check ships with crew -->
+              <do_if value="$scan_ship.people.count gt 0">
+
+                <!-- TEST 5: Use documented pattern - store list, use do_all with counter -->
+                <set_value name="$ship_crew_list" exact="$scan_ship.people.list" />
+
+                <!-- Try 1-based indexing (X4 standard for lists) -->
+                <do_all exact="$ship_crew_list.count" counter="$c">
+                  <set_value name="$crew" exact="$ship_crew_list.{$c}" />
+
+                  <!-- Get piloting skill -->
+                  <set_value name="$pilot_skill" exact="$crew.potentialskill.{controlpost.aipilot}" />
+
+                  <!-- Filter: Skip if skill is null/invalid -->
+                  <do_if value="$pilot_skill" min="0">
+
+                    <!-- TODO: Proper manager filtering (need to figure out how to identify managers from npctemplateentry) -->
+                    <!-- For now, just exclude current pilot -->
+                    <!-- Filter: Exclude current pilot of target ship -->
+                    <do_if value="$crew.name != $target_ship.pilot.knownname">
+
+                      <!-- Add to candidate pool (store the crew entry itself) -->
+                      <append_to_list name="$candidate_templates" exact="$crew" />
+                      <append_to_list name="$candidate_ships" exact="$scan_ship" />
+                      <append_to_list name="$candidate_skills" exact="$pilot_skill" />
+                    </do_if>
+                  </do_if>
+                </do_all>
+              </do_if>
+            </do_all>
+
+            <debug_text text="'PP MAMS: Found ' + $candidate_templates.count + ' template candidates'" />
+
+            <!-- Find best candidate by skill -->
+            <do_if value="$candidate_templates.count gt 0">
+              <set_value name="$best_index" exact="-1" />
+              <set_value name="$best_skill" exact="-1" />
+
+              <do_all exact="$candidate_skills.count" counter="$k">
+                <do_if value="$candidate_skills.{$k} gt $best_skill">
+                  <set_value name="$best_index" exact="$k" />
+                  <set_value name="$best_skill" exact="$candidate_skills.{$k}" />
+                </do_if>
+              </do_all>
+
+              <!-- $candidate_templates now contains npctemplateentry objects (if hypothesis is correct) -->
+              <set_value name="$best_crew" exact="$candidate_templates.{$best_index}" />
+              <set_value name="$source_ship" exact="$candidate_ships.{$best_index}" />
+
+              <!-- TEST 5 RESULTS: Documented API pattern results -->
+              <debug_text text="'PP MAMS: === TEST 5 RESULTS: Documented API Pattern ==='" />
+              <debug_text text="'PP MAMS: Best candidate: name=' + @$best_crew.name + ', role=' + @$best_crew.role + ', seed=' + @$best_crew.seed" />
+              <debug_text text="'PP MAMS: Best candidate skill: ' + $best_skill + ' from ' + @$source_ship.knownname" />
+
+              <!-- TODO: Assignment logic - need to figure out how to get npctemplate reference from npctemplateentry -->
+              <!-- create_npc_template needs template reference, but $best_crew is npctemplateentry -->
+              <!-- For now, just report success of finding candidate -->
+              <show_notification caption="'PP MAMS: Candidate Found!'" text="@$best_crew.name + ' (skill: ' + $best_skill + ') - Assignment TBD!'" />
+              <write_to_logbook category="general" title="'PP MAMS: Candidate Found'" text="'Best candidate: ' + @$best_crew.name + ' (skill: ' + $best_skill + ') - need template reference for assignment'" />
+              <debug_text text="'PP MAMS: Candidate selection complete! (Assignment method TBD)'" />
+            </do_if>
+            <do_else>
+              <debug_text text="'PP MAMS: ERROR - No eligible candidates found!'" />
+              <show_notification caption="'PP MAMS: No Candidates'" text="'No eligible crew found to replace pilot on ' + @$target_ship.knownname" />
+            </do_else>
           </do_if>
         </do_if>
       </actions>
