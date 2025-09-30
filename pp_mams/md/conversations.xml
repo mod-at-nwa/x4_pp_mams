@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <diff>
 
-  <!-- Patch g_pilotleave: Add signal after the signal_objects at line 837 -->
-  <add sel='/mdscript/cues/cue[@name="DefaultComm"]/actions/do_elseif[@value="event.param == &apos;g_pilotleave&apos;"]/do_if/signal_objects' pos="after">
-    <signal_cue_instantly cue="md.Conversations.LogFired" param="event.object" comment="PP MAMS: Signal LogFired when pilot dismissed"/>
-  </add>
-
-  <!-- Patch g_fire: Add signal after the signal_objects in do_else at line 850 -->
-  <add sel='/mdscript/cues/cue[@name="DefaultComm"]/actions/do_elseif[@value="event.param == &apos;g_fire&apos;"]/do_else/signal_objects' pos="after">
-    <signal_cue_instantly cue="md.Conversations.LogFired" param="event.object" comment="PP MAMS: Signal LogFired when crew fired"/>
+  <!-- TEST: Can we find ANY do_elseif without attribute filter? -->
+  <add sel='/mdscript/cues/cue[@name="DefaultComm"]' pos="prepend" silent="false">
+    <debug_text text="'PP MAMS: TEST - Found DefaultComm cue!'" comment="PP MAMS TEST"/>
   </add>
 
 </diff>
