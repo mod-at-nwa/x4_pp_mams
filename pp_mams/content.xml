@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v3.14: Packaged as CAT/DAT for diff support!" author="Meldrey" version="314" date="2025-09-30" save="false" enabled="1">
-  <text language="44" description="PP MAMS v3.14: Packaged as CAT/DAT for diff support!" />
+<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v3.26: DEBUG - Typename sampling!" author="Meldrey" version="326" date="2025-09-30" save="0">
+  <text language="44" description="PP MAMS v3.26: DEBUG - Typename sampling!" />
 </content>

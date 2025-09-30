@@ -171,43 +171,95 @@ After extensive research and extraction of X4's game files, we discovered the **
   - `/md/conversations.xml` - Contains LogFired/LogHired cues
   - `scriptproperties.html` - Script property documentation
 
-## Current Development Status (v3.13)
+## Current Development Status (v3.26)
 
-**IN PROGRESS - Debugging diff patch XPath selectors**
+**IN PROGRESS - API Discovery & Personnel List Access**
 
-We've discovered Egosoft's oversight: `md.Conversations.LogFired` exists but is never signalled. We're patching the game to fix it.
+After abandoning the diff patch approach, we pivoted to using X4's native `event_conversation_next_section` event which fires when conversation sections change (including pilot firing via `g_pilotleave` section).
 
-**Current Issues:**
-- Diff patch is being **processed** by X4 (major progress!) but XPath can't find target nodes
-- XPath attempts:
-  - v1-v2: Used `&quot;` - failed (not processed)
-  - v3: Comment-based selectors - failed (not processed)
-  - v4: Descendant search `//` - failed (not processed)
-  - v5: Absolute paths `/mdscript/...` with `&quot;` - **PROCESSED but no match**
-  - v6: Absolute paths with `&apos;` - **PROCESSED but no match**
-  - Testing: Simplified XPath to find just `DefaultComm` cue
-- Studied kuertee_attack_ai_tweaks working diff patches for reference
+### Latest Breakthrough: Personnel Access!
 
 **What Works:**
-- ✅ Event listener for `md.Conversations.LogFired` ready
-- ✅ Event monitor for `event_platform_actor_created` (debug only)
-- ✅ Mod loads correctly with version constants
-- ✅ Diff patch file is recognized and processed by X4
-- ✅ EventMonitor_NPCCreated disabled (too spammy)
+- ✅ **Instant pilot firing detection** using `event_conversation_next_section`
+- ✅ **Ship identification** - Full ship object with ID, IDcode, and name
+- ✅ **Personnel API discovered** - `find_object` with `class="npc"` and `owner="faction.player"`
+- ✅ **2102 NPCs found** in player's faction
+- ✅ Mod loads correctly with version tracking (v3.26)
+- ✅ CAT/DAT packaging system working perfectly
 
-**What's Broken:**
-- ❌ XPath expressions can't locate target nodes in conversations.xml
-- ❌ LogFired never fires because game doesn't signal it
-- ❌ No real-time pilot firing detection until patch works
+**Current Challenge: Personnel Filtering**
+We have access to 2102 NPCs but need to filter them correctly:
+- Fired NPCs show `typename: Crewman` or `Crewwoman`
+- When iterating the 2102 NPCs, **0 matched** these typenames
+- This suggests NPCs have different typenames when assigned vs. in personnel pool
+- v3.26 is sampling actual typenames to discover what we're dealing with
+  - Might be: "pilot", "engineer", "marine", "trader", etc.
+  - Or might be classified differently entirely
 
-**Next Steps:**
-- Test if basic cue selector works: `/mdscript/cues/cue[@name="DefaultComm"]`
-- If basic path fails, investigate namespace or parsing issues
-- Consider alternative approaches if XPath fundamentally blocked
+**The Logic (Once We Access Personnel):**
+
+For **trade ships** (when pilot fired):
+1. Search through all personnel
+2. Sort by captain/pilot skill
+3. Exclude all who are already captains (leaves skilled crewmembers)
+4. Pick highest and reassign to captain
+
+For **military ships** (when pilot fired):
+1. Search through all personnel
+2. Sort by captain/pilot skill
+3. Exclude all military ships
+4. Pick highest and reassign to captain
+5. If a trade ship was de-captained, use trade ship logic to replace them
+
+**What We're Testing:**
+- v3.26 samples 5 NPCs from the 2102 to see their actual typenames
+- Once we know the correct typename patterns, we can filter properly
+- Then implement the full replacement logic above
+
+**Technical Discoveries:**
+- `player.entity` exists but unsure what it contains
+- `faction.player` exists and works with `find_object`
+- `find_object` with `class="npc"` and `owner="faction.player"` and `multiple="true"` returns all player-owned NPCs
+- NPCs have `.container` property showing which ship/station they're on
+- NPC typenames change based on assignment status (active vs. pool)
 
 ## Version History
 
-- **v3.10** (2025-09-29): **PATCHED THE GAME - Fixed Egosoft's oversight!** (IN PROGRESS)
+- **v3.26** (2025-09-30): **Personnel typename sampling for filtering logic**
+  - Sample 5 NPCs to discover actual typename patterns in personnel pool
+  - Investigating why 0 NPCs matched Crewman/Crewwoman filter
+  - Need to understand typename differences between assigned vs. pool personnel
+- **v3.25** (2025-09-30): **Crew filtering attempt - discovered typename mismatch**
+  - Attempted to filter 2102 NPCs for Crewman/Crewwoman
+  - Found 0 matches - typenames differ in personnel pool vs. active assignment
+  - Confirmed NPCs have `.container` property for ship/station assignments
+- **v3.24** (2025-09-30): **Personnel API discovered - 2102 NPCs accessible!**
+  - Successfully used `find_object` with `class="npc"` and `owner="faction.player"`
+  - Found 2102 NPCs owned by player faction
+  - First NPC showed as "[*] Advanced Satellite" - includes non-crew objects
+  - Major breakthrough: We can access all player personnel!
+- **v3.23** (2025-09-30): **API discovery tests for personnel access**
+  - Tested `player.people`, `player.crew`, `player.entity`, `faction.player`
+  - Found `player.entity` exists (boolean check)
+  - Found `faction.player` exists (boolean check)
+  - Prepared for `find_object` testing
+- **v3.22** (2025-09-30): **Ship ID capture - full ship identification working**
+  - Added `ship.id` and `ship.idcode` debug output
+  - Verified ship object fully accessible at firing detection time
+  - Ship details: ID (0x36ee2), IDcode (VYR-110), name (R3D3)
+  - Ready for personnel list discovery
+- **v3.21** (2025-09-30): **Event-driven detection fully operational!**
+  - Confirmed `event_conversation_next_section` fires on pilot dismissal
+  - Detects `g_pilotleave` section change instantly
+  - Ship object captured with full properties
+  - NPC properties show typename, knownname, but entityrole/post are null
+  - Abandoned diff patch approach in favor of native events
+- **v3.20** (2025-09-30): **Pivot to event_conversation_next_section approach**
+  - Replaced diff patch strategy with native X4 events
+  - Using `event_conversation_next_section` to detect `g_pilotleave`
+  - Instant detection without game file modifications
+  - Cleaner, more maintainable solution
+- **v3.10-3.14** (2025-09-29): **PATCHED THE GAME - Fixed Egosoft's oversight!** (ABANDONED)
   - **CRITICAL DISCOVERY**: md.Conversations.LogFired was NEVER signalled by the game
   - **SOLUTION**: Created diff patch for conversations.xml to add missing signal_cue calls
   - **PATCHES**: Both g_pilotleave and g_fire sections now signal LogFired properly

@@ -10,52 +10,85 @@
         <event_game_loaded />
       </conditions>
       <actions>
-        <set_value name="$version" exact="'3.14'" />
-        <set_value name="$xpath_ver" exact="'CAT/DAT'" />
+        <set_value name="$version" exact="'3.26'" />
+        <set_value name="$method" exact="'event_conversation_next_section'" />
 
-        <debug_text text="'=== PP MAMS v' + $version + ': XPath ' + $xpath_ver + ' absolute paths ==='" />
-        <debug_text text="'PP MAMS: Using absolute XPath like kuertee mod!'" />
+        <debug_text text="'=== PP MAMS v' + $version + ': Using ' + $method + ' ==='" />
+        <debug_text text="'PP MAMS: Event-driven detection via conversation sections!'" />
         <debug_text text="'PP MAMS: Init cue executed - version ' + $version" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
         <set_value name="global.$pp_mams_debug" exact="true" />
         <set_value name="global.$pp_mams_version" exact="$version" />
 
-        <show_notification caption="'PP MAMS v' + $version + ' Loaded'" text="'XPath ' + $xpath_ver + ' - absolute paths from root!'" />
-        <write_to_logbook category="general" title="'PP MAMS v' + $version + ' Loaded'" text="'XPath ' + $xpath_ver + ' with absolute paths: /mdscript/cues/cue[@name=DefaultComm]/...'" />
+        <show_notification caption="'PP MAMS v' + $version + ' Loaded'" text="'Event-driven conversation monitoring active!'" />
+        <write_to_logbook category="general" title="'PP MAMS v' + $version + ' Loaded'" text="'Using ' + $method + ' for instant pilot fire detection!'" />
         <debug_text text="'=== PP MAMS v' + $version + ': LOADING COMPLETE ==='" />
+
+        <!-- API DISCOVERY: Test personnel filtering -->
+        <debug_text text="'PP MAMS: === TESTING PERSONNEL FILTERING ==='" />
+
+        <!-- Get all NPCs -->
+        <find_object name="$all_npcs" class="npc" owner="faction.player" multiple="true" />
+        <debug_text text="'PP MAMS: Total NPCs: ' + $all_npcs.count" />
+
+        <!-- Sample typenames to understand what we're dealing with -->
+        <debug_text text="'PP MAMS: Sampling NPC typenames...'" />
+        <debug_text text="'PP MAMS: NPC 1: ' + @$all_npcs.{1}.typename + ' / ' + @$all_npcs.{1}.knownname + ' / container: ' + @$all_npcs.{1}.container.knownname" />
+        <debug_text text="'PP MAMS: NPC 10: ' + @$all_npcs.{10}.typename + ' / ' + @$all_npcs.{10}.knownname + ' / container: ' + @$all_npcs.{10}.container.knownname" />
+        <debug_text text="'PP MAMS: NPC 50: ' + @$all_npcs.{50}.typename + ' / ' + @$all_npcs.{50}.knownname + ' / container: ' + @$all_npcs.{50}.container.knownname" />
+        <debug_text text="'PP MAMS: NPC 100: ' + @$all_npcs.{100}.typename + ' / ' + @$all_npcs.{100}.knownname + ' / container: ' + @$all_npcs.{100}.container.knownname" />
+        <debug_text text="'PP MAMS: NPC 500: ' + @$all_npcs.{500}.typename + ' / ' + @$all_npcs.{500}.knownname + ' / container: ' + @$all_npcs.{500}.container.knownname" />
       </actions>
     </cue>
 
-    <!-- EVENT-DRIVEN: Listen for pilot firing via md.Conversations.LogFired -->
-    <cue name="PilotFiredListener" instantiate="true">
+    <!-- EVENT-DRIVEN: Listen for fire conversation section -->
+    <cue name="PilotFireListener" instantiate="true">
       <conditions>
-        <event_cue_signalled cue="md.Conversations.LogFired" />
+        <event_conversation_next_section />
       </conditions>
       <actions>
-        <!-- event.param contains the fired actor -->
-        <set_value name="$fired_actor" exact="event.param" />
+        <debug_text text="'PP MAMS: Conversation section changed to: ' + event.param" />
 
-        <debug_text text="'PP MAMS: PILOT FIRED EVENT DETECTED!'" />
-        <debug_text text="'PP MAMS: Fired actor: ' + @$fired_actor.typename + ' - ' + @$fired_actor.knownname" />
-        <debug_text text="'PP MAMS: Previously assigned to: ' + @$fired_actor.container.knownname" />
+        <!-- Check if this is the fire confirmation or actual fire action -->
+        <do_if value="event.param == 'g_fire' or event.param == 'g_pilotleave'">
+          <debug_text text="'PP MAMS: FIRING DETECTED!'" />
 
-        <!-- Check if this was a pilot (not other crew types) -->
-        <do_if value="$fired_actor.typename == 'pilot'">
-          <debug_text text="'PP MAMS: PILOT DEFICIT CREATED - checking ship...'" />
+          <!-- Store the ship and NPC for reference -->
+          <set_value name="$fired_npc" exact="event.object" />
+          <set_value name="$ship" exact="$fired_npc.container" />
 
-          <!-- Find the ship that just lost its pilot -->
-          <set_value name="$ship" exact="$fired_actor.container" />
+          <!-- DEBUG: Output ALL relevant properties for analysis -->
+          <debug_text text="'PP MAMS: --- NPC Properties ---'" />
+          <debug_text text="'PP MAMS:   typename: ' + @$fired_npc.typename" />
+          <debug_text text="'PP MAMS:   knownname: ' + @$fired_npc.knownname" />
+          <debug_text text="'PP MAMS:   entityrole: ' + @$fired_npc.entityrole" />
+          <debug_text text="'PP MAMS:   post: ' + @$fired_npc.post" />
+          <debug_text text="'PP MAMS:   combinedskill.piloting: ' + @$fired_npc.combinedskill.{skill.piloting}" />
+          <debug_text text="'PP MAMS: --- Ship Properties ---'" />
+          <debug_text text="'PP MAMS:   ship.id: ' + $ship" />
+          <debug_text text="'PP MAMS:   ship.idcode: ' + @$ship.idcode" />
+          <debug_text text="'PP MAMS:   ship.knownname: ' + @$ship.knownname" />
+          <debug_text text="'PP MAMS:   ship.pilot.exists: ' + $ship.pilot.exists" />
+          <debug_text text="'PP MAMS:   ship.pilot.knownname: ' + @$ship.pilot.knownname" />
+          <debug_text text="'PP MAMS: --- Test Conditions ---'" />
+          <debug_text text="'PP MAMS:   typename==pilot: ' + ($fired_npc.typename == 'pilot')" />
+          <debug_text text="'PP MAMS:   entityrole==pilot: ' + ($fired_npc.entityrole == entityrole.pilot)" />
+          <debug_text text="'PP MAMS:   post==aipilot: ' + ($fired_npc.post == controlpost.aipilot)" />
+          <debug_text text="'PP MAMS:   has piloting skill: ' + ($fired_npc.combinedskill.{skill.piloting} gt 0)" />
 
-          <do_if value="$ship.isclass.ship">
-            <show_notification caption="'PP MAMS Alert!'" text="'Pilot fired from ' + @$ship.knownname + '!'" />
-            <write_to_logbook category="general" title="'PP MAMS: Pilot Deficit'" text="'Ship ' + @$ship.knownname + ' lost pilot: ' + @$fired_actor.knownname" />
-            <debug_text text="'PP MAMS: Ship ' + @$ship.knownname + ' now has pilot deficit'" />
+          <!-- ORIGINAL CHECK: Keep for comparison -->
+          <do_if value="$fired_npc.typename == 'pilot'">
+            <show_notification caption="'PP MAMS Alert (typename)!'" text="'Pilot fired from ' + @$ship.knownname + '!'" />
+            <write_to_logbook category="general" title="'PP MAMS: Pilot Deficit (typename)'" text="'Ship ' + @$ship.knownname + ' fired pilot: ' + @$fired_npc.knownname" />
+          </do_if>
+
+          <!-- TEST: Alternative checks -->
+          <do_if value="$fired_npc.entityrole == entityrole.pilot">
+            <show_notification caption="'PP MAMS Alert (entityrole)!'" text="'Pilot fired from ' + @$ship.knownname + '!'" />
+            <write_to_logbook category="general" title="'PP MAMS: Pilot Deficit (entityrole)'" text="'Ship ' + @$ship.knownname + ' fired pilot: ' + @$fired_npc.knownname" />
           </do_if>
         </do_if>
-        <do_else>
-          <debug_text text="'PP MAMS: Fired crew member was not a pilot (' + @$fired_actor.typename + ')'" />
-        </do_else>
       </actions>
     </cue>
 

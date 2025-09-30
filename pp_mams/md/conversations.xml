@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<diff>
-
-  <!-- TEST: Can we find ANY do_elseif without attribute filter? -->
-  <add sel='/mdscript/cues/cue[@name="DefaultComm"]' pos="prepend" silent="false">
-    <debug_text text="'PP MAMS: TEST - Found DefaultComm cue!'" comment="PP MAMS TEST"/>
-  </add>
-
-</diff>

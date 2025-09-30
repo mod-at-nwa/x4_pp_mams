@@ -19,7 +19,7 @@ def calculate_md5(filepath):
 def pack_mod(source_dir, output_dir, exclude_patterns=None):
     """Pack mod files into CAT/DAT format"""
     if exclude_patterns is None:
-        exclude_patterns = ['.backup', 'README.md', '.git']
+        exclude_patterns = ['.backup', 'README.md', '.git', 'content.xml']
 
     source_path = Path(source_dir)
     output_path = Path(output_dir)
@@ -38,11 +38,12 @@ def pack_mod(source_dir, output_dir, exclude_patterns=None):
     for root, dirs, files in os.walk(source_path):
         for file in files:
             filepath = Path(root) / file
+            rel_path = filepath.relative_to(source_path)
             # Skip excluded patterns
             if any(pattern in str(filepath) for pattern in exclude_patterns):
                 continue
-            # Get relative path from source_dir
-            rel_path = filepath.relative_to(source_path)
+            if any(pattern in str(rel_path) for pattern in exclude_patterns):
+                continue
             all_files.append((filepath, rel_path))
 
     # Write DAT file and build CAT entries
@@ -77,4 +78,4 @@ def pack_mod(source_dir, output_dir, exclude_patterns=None):
     print(f"  {dat_file} ({dat_file.stat().st_size} bytes)")
 
 if __name__ == '__main__':
-    pack_mod('pp_mams', 'pp_mams_packed', exclude_patterns=['.backup', 'README.md'])
+    pack_mod('pp_mams', 'pp_mams_packed', exclude_patterns=['.backup', 'README.md', 'content.xml'])
