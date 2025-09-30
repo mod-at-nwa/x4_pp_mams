@@ -1,4 +1,15 @@
-<mdscript name="pp_mams" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+<?xml version="1.0" encoding="utf-8"?>
+<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v3.14: Packaged as CAT/DAT for diff support!" author="Meldrey" version="314" date="2025-09-30" save="false" enabled="1">
+  <text language="44" description="PP MAMS v3.14: Packaged as CAT/DAT for diff support!" />
+</content><?xml version="1.0" encoding="utf-8"?>
+<diff>
+
+  <!-- TEST: Can we find ANY do_elseif without attribute filter? -->
+  <add sel='/mdscript/cues/cue[@name="DefaultComm"]' pos="prepend" silent="false">
+    <debug_text text="'PP MAMS: TEST - Found DefaultComm cue!'" comment="PP MAMS TEST"/>
+  </add>
+
+</diff><mdscript name="pp_mams" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
   <params>
     <param name="notify" type="boolean" default="true" desc="Notification on assignment"/>
     <param name="logbook" type="boolean" default="true" desc="Assignment in Logbook"/>
