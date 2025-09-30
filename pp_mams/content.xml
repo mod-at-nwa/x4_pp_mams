@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v3.12: XPath v5 with absolute paths like kuertee!" author="Meldrey" version="312" date="2025-09-29" save="false" enabled="1">
-  <text language="44" description="PP MAMS v3.12: XPath v5 with absolute paths like kuertee!" />
+<content id="pp_mams" name="Pilot Personnel Merit Assignment Management System" description="PP MAMS v3.13: XPath v6 with absolute paths like kuertee!" author="Meldrey" version="312" date="2025-09-29" save="false" enabled="1">
+  <text language="44" description="PP MAMS v3.13: XPath v6 with absolute paths like kuertee!" />
 </content>
