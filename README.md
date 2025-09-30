@@ -171,33 +171,39 @@ After extensive research and extraction of X4's game files, we discovered the **
   - `/md/conversations.xml` - Contains LogFired/LogHired cues
   - `scriptproperties.html` - Script property documentation
 
-## Current Development Status (v3.10)
+## Current Development Status (v3.13)
 
 **IN PROGRESS - Debugging diff patch XPath selectors**
 
 We've discovered Egosoft's oversight: `md.Conversations.LogFired` exists but is never signalled. We're patching the game to fix it.
 
 **Current Issues:**
-- Diff patch created but XPath expressions failing due to nested quote escaping
-- Attempted fixes:
-  - v1: Used `&quot;` - failed
-  - v2: Used `&apos;` - failed (quotes still nested)
-  - v3: Rewrote XPath to avoid nested quotes entirely (using comment selectors and sibling structure)
-- Testing v3 approach now
+- Diff patch is being **processed** by X4 (major progress!) but XPath can't find target nodes
+- XPath attempts:
+  - v1-v2: Used `&quot;` - failed (not processed)
+  - v3: Comment-based selectors - failed (not processed)
+  - v4: Descendant search `//` - failed (not processed)
+  - v5: Absolute paths `/mdscript/...` with `&quot;` - **PROCESSED but no match**
+  - v6: Absolute paths with `&apos;` - **PROCESSED but no match**
+  - Testing: Simplified XPath to find just `DefaultComm` cue
+- Studied kuertee_attack_ai_tweaks working diff patches for reference
 
 **What Works:**
 - ✅ Event listener for `md.Conversations.LogFired` ready
-- ✅ Event monitors for `event_npc_created` and `event_platform_actor_created` (debug only, no notifications)
-- ✅ Mod loads correctly (v3.10)
+- ✅ Event monitor for `event_platform_actor_created` (debug only)
+- ✅ Mod loads correctly with version constants
+- ✅ Diff patch file is recognized and processed by X4
+- ✅ EventMonitor_NPCCreated disabled (too spammy)
 
 **What's Broken:**
-- ❌ Diff patch XPath not applying yet
+- ❌ XPath expressions can't locate target nodes in conversations.xml
 - ❌ LogFired never fires because game doesn't signal it
 - ❌ No real-time pilot firing detection until patch works
 
 **Next Steps:**
-- Test v3 XPath approach (comment-based selectors)
-- If v3 fails, consider alternative: periodic scanner fallback or manual XML replacement
+- Test if basic cue selector works: `/mdscript/cues/cue[@name="DefaultComm"]`
+- If basic path fails, investigate namespace or parsing issues
+- Consider alternative approaches if XPath fundamentally blocked
 
 ## Version History
 
