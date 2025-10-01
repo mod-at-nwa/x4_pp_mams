@@ -1,6 +1,8 @@
 # PP MAMS - Pilot Personnel Merit Assignment Management System
 
-**Version 3.51** - A hard-won X4: Foundations mod for automatic pilot replacement based on merit.
+**Version 3.51** - An unfinished but functional X4: Foundations mod for automatic pilot replacement. Development discontinued for ethical reasons.
+
+> **Development Status:** This mod works but has known issues. Development was halted due to ethical concerns with Steam's data practices. The code is released as-is for anyone who wants to fork and improve it.
 
 ## What It Does
 
@@ -118,9 +120,9 @@ Accessing crew properties was a nightmare:
 - `potentialskill.{controlpost.aipilot}` gives pilot skill
 - But only after 10+ test iterations to discover the syntax
 
-## Why Not on Steam?
+## Why Development Stopped
 
-This mod is released on GitHub rather than Steam Workshop due to privacy concerns with Steam's data collection practices. The code is open source and free for anyone to use, modify, and distribute.
+This mod is released on GitHub rather than Steam Workshop due to privacy concerns with Steam's data collection practices. Development was discontinued because I can no longer ethically participate in Steam games or their ecosystem. The code is open source and free for anyone to use, modify, and distribute.
 
 ## Credits
 
