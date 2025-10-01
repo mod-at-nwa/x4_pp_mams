@@ -10,11 +10,11 @@
         <event_game_loaded />
       </conditions>
       <actions>
-        <set_value name="$version" exact="'3.46'" />
+        <set_value name="$version" exact="'3.47'" />
         <set_value name="$method" exact="'event_control_entity_removed'" />
 
         <debug_text text="'=== PP MAMS v' + $version + ': Using ' + $method + ' ==='" />
-        <debug_text text="'PP MAMS: v3.46 - Fixed pilot detection via controlpost check!'" />
+        <debug_text text="'PP MAMS: v3.47 - Fixed cue signaling with global variable!'" />
         <debug_text text="'PP MAMS: Init cue executed - version ' + $version" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -118,94 +118,89 @@
             <show_notification caption="'PP MAMS Alert!'" text="'Pilot fired from ' + @$ship.knownname + '!'" />
             <write_to_logbook category="general" title="'PP MAMS: Pilot Deficit'" text="'Ship ' + @$ship.knownname + ' ('+@$ship.idcode+') fired pilot: ' + @$fired_npc.knownname" />
 
-            <!-- Signal child cue to wait for control entity removal -->
-            <signal_cue_instantly cue="PilotReplacementHandler" param="$ship"/>
+            <!-- Store ship reference in global for removal watcher -->
+            <set_value name="global.$pp_mams_pending_ship" exact="$ship"/>
           </do_if>
         </do_if>
       </actions>
-      <cues>
-        <!-- Child cue: Wait for pilot removal event, then replace -->
-        <cue name="PilotReplacementHandler" instantiate="true">
-          <conditions>
-            <event_cue_signalled/>
-          </conditions>
-          <actions>
-            <set_value name="$target_ship" exact="event.param"/>
-          </actions>
-          <cues>
-            <cue name="WaitForPilotRemoval">
-              <conditions>
-                <event_control_entity_removed object="$target_ship"/>
-              </conditions>
-              <actions>
-                <!-- REPLACEMENT LOGIC v4: Event-based NPC assignment -->
-            <set_value name="$candidates" exact="[]" />
-            <set_value name="$candidate_ships" exact="[]" />
-            <set_value name="$candidate_skills" exact="[]" />
+    </cue>
 
-            <!-- Find all player ships -->
-            <find_object name="$all_ships" class="ship" owner="faction.player" multiple="true" />
+    <!-- Separate watcher for control entity removal events -->
+    <cue name="PilotRemovalWatcher" instantiate="true">
+      <conditions>
+        <event_control_entity_removed />
+      </conditions>
+      <actions>
+        <!-- Check if this matches our pending ship -->
+        <do_if value="global.$pp_mams_pending_ship and event.object == global.$pp_mams_pending_ship">
+          <set_value name="$target_ship" exact="event.object"/>
+          <set_value name="global.$pp_mams_pending_ship" exact="null"/>
 
-            <!-- Build candidate pool using find_object_component -->
-            <do_all exact="$all_ships.count" counter="$i">
-              <set_value name="$scan_ship" exact="$all_ships.{$i}" />
+          <!-- REPLACEMENT LOGIC v5: Simplified event-based assignment -->
+          <set_value name="$candidates" exact="[]" />
+          <set_value name="$candidate_ships" exact="[]" />
+          <set_value name="$candidate_skills" exact="[]" />
 
-              <!-- Skip same ship (no point moving pilot from same ship) -->
-              <do_if value="$scan_ship != $target_ship">
+          <!-- Find all player ships -->
+          <find_object name="$all_ships" class="ship" owner="faction.player" multiple="true" />
 
-                <!-- Find all NPCs on this ship -->
-                <find_object_component name="$ship_npcs" class="class.npc" object="$scan_ship" multiple="true" />
+          <!-- Build candidate pool using find_object_component -->
+          <do_all exact="$all_ships.count" counter="$i">
+            <set_value name="$scan_ship" exact="$all_ships.{$i}" />
 
-                <!-- Check each NPC -->
-                <do_for_each name="$npc" in="$ship_npcs">
+            <!-- Skip same ship (no point moving pilot from same ship) -->
+            <do_if value="$scan_ship != $target_ship">
 
-                  <!-- Filter 1: NEVER touch managers! -->
-                  <do_if value="$npc.controlpost != controlpost.manager">
+              <!-- Find all NPCs on this ship -->
+              <find_object_component name="$ship_npcs" class="class.npc" object="$scan_ship" multiple="true" />
 
-                    <!-- Filter 2: Must have pilot skill -->
-                    <do_if value="@$npc.potentialskill.{controlpost.aipilot} gt 0">
+              <!-- Check each NPC -->
+              <do_for_each name="$npc" in="$ship_npcs">
 
-                      <!-- Add to candidate pool -->
-                      <append_to_list name="$candidates" exact="$npc" />
-                      <append_to_list name="$candidate_ships" exact="$scan_ship" />
-                      <append_to_list name="$candidate_skills" exact="$npc.potentialskill.{controlpost.aipilot}" />
+                <!-- Filter 1: NEVER touch managers! -->
+                <do_if value="$npc.controlpost != controlpost.manager">
 
-                    </do_if>
+                  <!-- Filter 2: Must have pilot skill -->
+                  <do_if value="@$npc.potentialskill.{controlpost.aipilot} gt 0">
+
+                    <!-- Add to candidate pool -->
+                    <append_to_list name="$candidates" exact="$npc" />
+                    <append_to_list name="$candidate_ships" exact="$scan_ship" />
+                    <append_to_list name="$candidate_skills" exact="$npc.potentialskill.{controlpost.aipilot}" />
+
                   </do_if>
-                </do_for_each>
+                </do_if>
+              </do_for_each>
+            </do_if>
+          </do_all>
+
+          <!-- Find best candidate by skill -->
+          <do_if value="$candidates.count gt 0">
+            <set_value name="$best_index" exact="-1" />
+            <set_value name="$best_skill" exact="-1" />
+
+            <do_all exact="$candidate_skills.count" counter="$k">
+              <do_if value="$candidate_skills.{$k} gt $best_skill">
+                <set_value name="$best_index" exact="$k" />
+                <set_value name="$best_skill" exact="$candidate_skills.{$k}" />
               </do_if>
             </do_all>
 
-            <!-- Find best candidate by skill -->
-            <do_if value="$candidates.count gt 0">
-              <set_value name="$best_index" exact="-1" />
-              <set_value name="$best_skill" exact="-1" />
+            <!-- Get best candidate NPC entity -->
+            <set_value name="$best_npc" exact="$candidates.{$best_index}" />
+            <set_value name="$source_ship" exact="$candidate_ships.{$best_index}" />
 
-              <do_all exact="$candidate_skills.count" counter="$k">
-                <do_if value="$candidate_skills.{$k} gt $best_skill">
-                  <set_value name="$best_index" exact="$k" />
-                  <set_value name="$best_skill" exact="$candidate_skills.{$k}" />
-                </do_if>
-              </do_all>
+            <!-- ASSIGNMENT: Transfer NPC to target ship as pilot -->
+            <assign_control_entity actor="$best_npc" object="$target_ship" post="controlpost.aipilot" init="true" transfer="true"/>
 
-              <!-- Get best candidate NPC entity -->
-              <set_value name="$best_npc" exact="$candidates.{$best_index}" />
-              <set_value name="$source_ship" exact="$candidate_ships.{$best_index}" />
-
-              <!-- ASSIGNMENT: Transfer NPC to target ship as pilot -->
-              <assign_control_entity actor="$best_npc" object="$target_ship" post="controlpost.aipilot" init="true" transfer="true"/>
-
-              <show_notification caption="'PP MAMS: Pilot Assigned!'" text="@$best_npc.knownname + ' (skill: ' + $best_skill + ') → ' + @$target_ship.knownname" />
-              <write_to_logbook category="general" title="'PP MAMS: Pilot Assigned'" text="'Assigned ' + @$best_npc.knownname + ' (skill: ' + $best_skill + ') from ' + @$source_ship.knownname + ' to ' + @$target_ship.knownname" />
-            </do_if>
-            <do_else>
-              <show_notification caption="'PP MAMS: No Candidates'" text="'No eligible crew found to replace pilot on ' + @$target_ship.knownname" />
-            </do_else>
-              </actions>
-            </cue>
-          </cues>
-        </cue>
-      </cues>
+            <show_notification caption="'PP MAMS: Pilot Assigned!'" text="@$best_npc.knownname + ' (skill: ' + $best_skill + ') → ' + @$target_ship.knownname" />
+            <write_to_logbook category="general" title="'PP MAMS: Pilot Assigned'" text="'Assigned ' + @$best_npc.knownname + ' (skill: ' + $best_skill + ') from ' + @$source_ship.knownname + ' to ' + @$target_ship.knownname" />
+          </do_if>
+          <do_else>
+            <show_notification caption="'PP MAMS: No Candidates'" text="'No eligible crew found to replace pilot on ' + @$target_ship.knownname" />
+          </do_else>
+        </do_if>
+      </actions>
     </cue>
 
     <!-- EVENT MONITORS: Track game events for debugging - DEBUG ONLY, NO NOTIFICATIONS -->
