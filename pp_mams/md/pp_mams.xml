@@ -10,11 +10,11 @@
         <event_game_loaded />
       </conditions>
       <actions>
-        <set_value name="$version" exact="'3.41'" />
-        <set_value name="$method" exact="'event_conversation_next_section'" />
+        <set_value name="$version" exact="'3.46'" />
+        <set_value name="$method" exact="'event_control_entity_removed'" />
 
         <debug_text text="'=== PP MAMS v' + $version + ': Using ' + $method + ' ==='" />
-        <debug_text text="'PP MAMS: PRODUCTION v3.41 - Full replacement logic!'" />
+        <debug_text text="'PP MAMS: v3.46 - Fixed pilot detection via controlpost check!'" />
         <debug_text text="'PP MAMS: Init cue executed - version ' + $version" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -25,79 +25,13 @@
         <write_to_logbook category="general" title="'PP MAMS v' + $version + ' Loaded'" text="'Pilot replacement system online - fire a pilot to test!'" />
         <debug_text text="'=== PP MAMS v' + $version + ': LOADING COMPLETE ==='" />
 
-        <!-- API DISCOVERY v4: MULTI-HYPOTHESIS TEST BATTERY -->
-        <debug_text text="'PP MAMS: === MULTI-HYPOTHESIS TEST BATTERY ==='" />
-
-        <!-- Get all player ships -->
-        <find_object name="$all_ships" class="ship" owner="faction.player" multiple="true" />
-        <debug_text text="'PP MAMS: Total objects: ' + $all_ships.count" />
-
-        <!-- Find first ship WITH crew -->
-        <set_value name="$test_ship" exact="null" />
-        <do_all exact="$all_ships.count" counter="$i">
-          <do_if value="$all_ships.{$i}.people.count gt 0">
-            <set_value name="$test_ship" exact="$all_ships.{$i}" />
-            <break/>
-          </do_if>
-        </do_all>
-
-        <do_if value="$test_ship">
-          <debug_text text="'PP MAMS: === Test Ship: ' + @$test_ship.knownname + ' ==='" />
-          <debug_text text="'PP MAMS:   people.count: ' + $test_ship.people.count" />
-          <debug_text text="'PP MAMS:   pilot: ' + @$test_ship.pilot.knownname" />
-
-          <!-- TEST 10: find_object_component with class.npc -->
-          <debug_text text="'PP MAMS: --- TEST 10: find_object_component class.npc Test ---'" />
-
-          <!-- Find NPCs ON THE TEST SHIP using find_object_component -->
-          <find_object_component name="$ship_npcs" class="class.npc" object="$test_ship" multiple="true" />
-          <debug_text text="'PP MAMS: NPCs found on ' + @$test_ship.knownname + ': ' + $ship_npcs.count" />
-
-          <!-- Test first 3 NPCs comprehensively -->
-          <do_if value="$ship_npcs.count gt 0">
-            <set_value name="$max_test" exact="3" />
-            <do_if value="$ship_npcs.count lt 3">
-              <set_value name="$max_test" exact="$ship_npcs.count" />
-            </do_if>
-
-            <do_all exact="$max_test" counter="$n">
-              <set_value name="$npc" exact="$ship_npcs.{$n}" />
-              <debug_text text="'PP MAMS: ====== NPC[' + $n + '] ======'" />
-              <debug_text text="'  typeof: ' + typeof $npc" />
-
-              <!-- Basic entity properties -->
-              <debug_text text="'  typename: ' + @$npc.typename" />
-              <debug_text text="'  knownname: ' + @$npc.knownname" />
-              <debug_text text="'  owner: ' + @$npc.owner" />
-
-              <!-- NPC-specific properties -->
-              <debug_text text="'  npctemplate: ' + @$npc.npctemplate" />
-              <debug_text text="'  currentchair: ' + @$npc.currentchair" />
-
-              <!-- CRITICAL: Skills and role (from game's own scripts) -->
-              <debug_text text="'  role: ' + @$npc.role" />
-              <debug_text text="'  controlpost: ' + @$npc.controlpost" />
-              <debug_text text="'  potentialskill.aipilot: ' + @$npc.potentialskill.{controlpost.aipilot}" />
-              <debug_text text="'  combinedskill: ' + @$npc.combinedskill" />
-            </do_all>
-          </do_if>
-          <do_else>
-            <debug_text text="'PP MAMS: No NPCs found on ship!'" />
-          </do_else>
-
-          <debug_text text="'PP MAMS: === TEST 10 COMPLETE ==='" />
-        </do_if>
-        <do_else>
-          <debug_text text="'PP MAMS: No ships with crew found for testing!'" />
-        </do_else>
-
-        <!-- YOSHIKO UEDA TRACKER: Find and track her location -->
-        <debug_text text="'PP MAMS: === YOSHIKO UEDA TRACKER INIT ==='" />
+        <!-- YOSHIKO UEDA TRACKER: Find and track her location (optional debug feature) -->
         <set_value name="$yoshiko_found" exact="false" />
         <set_value name="global.$yoshiko_ship" exact="null" />
         <set_value name="global.$yoshiko_last_ship" exact="null" />
 
         <!-- Search all ships for Yoshiko Ueda -->
+        <find_object name="$all_ships" class="ship" owner="faction.player" multiple="true" />
         <do_all exact="$all_ships.count" counter="$y">
           <set_value name="$check_ship" exact="$all_ships.{$y}" />
           <do_if value="@$check_ship.people.count gt 0">
@@ -106,19 +40,10 @@
               <set_value name="global.$yoshiko_ship" exact="$check_ship" />
               <set_value name="global.$yoshiko_last_ship" exact="$check_ship" />
               <set_value name="$yoshiko_found" exact="true" />
-              <debug_text text="'PP MAMS: YOSHIKO FOUND as pilot on: ' + @$check_ship.knownname + ' (' + @$check_ship.idcode + ')'" />
               <break/>
             </do_if>
           </do_if>
         </do_all>
-
-        <do_if value="not $yoshiko_found">
-          <debug_text text="'PP MAMS: Yoshiko Ueda not found as pilot in fleet'" />
-        </do_if>
-        <do_else>
-          <show_notification caption="'PP MAMS: Yoshiko Tracker'" text="'Found Yoshiko on ' + @global.$yoshiko_ship.knownname" />
-        </do_else>
-        <debug_text text="'PP MAMS: === YOSHIKO TRACKER INIT COMPLETE ==='" />
       </actions>
     </cue>
 
@@ -182,45 +107,44 @@
         <event_conversation_next_section />
       </conditions>
       <actions>
-        <debug_text text="'PP MAMS: Conversation section changed to: ' + event.param" />
-
         <!-- Check if this is the fire confirmation or actual fire action -->
         <do_if value="event.param == 'g_fire' or event.param == 'g_pilotleave'">
-          <debug_text text="'PP MAMS: FIRING DETECTED!'" />
-
           <!-- Store the ship and NPC for reference -->
           <set_value name="$fired_npc" exact="event.object" />
           <set_value name="$ship" exact="$fired_npc.container" />
 
-          <!-- DEBUG: Output ALL relevant properties for analysis -->
-          <debug_text text="'PP MAMS: --- NPC Properties ---'" />
-          <debug_text text="'PP MAMS:   typename: ' + @$fired_npc.typename" />
-          <debug_text text="'PP MAMS:   knownname: ' + @$fired_npc.knownname" />
-          <debug_text text="'PP MAMS:   entityrole: ' + @$fired_npc.entityrole" />
-          <debug_text text="'PP MAMS:   post: ' + @$fired_npc.post" />
-          <debug_text text="'PP MAMS:   combinedskill.piloting: ' + @$fired_npc.combinedskill.{skill.piloting}" />
-          <debug_text text="'PP MAMS: --- Ship Properties ---'" />
-          <debug_text text="'PP MAMS:   ship.id: ' + $ship" />
-          <debug_text text="'PP MAMS:   ship.idcode: ' + @$ship.idcode" />
-          <debug_text text="'PP MAMS:   ship.knownname: ' + @$ship.knownname" />
-          <debug_text text="'PP MAMS:   ship.pilot.exists: ' + $ship.pilot.exists" />
-          <debug_text text="'PP MAMS:   ship.pilot.knownname: ' + @$ship.pilot.knownname" />
           <!-- DETECTION: Pilot firing confirmed -->
-          <do_if value="$fired_npc.typename == 'Crewman' or $fired_npc.typename == 'Crewwoman'">
+          <do_if value="$fired_npc.controlpost == controlpost.aipilot">
             <show_notification caption="'PP MAMS Alert!'" text="'Pilot fired from ' + @$ship.knownname + '!'" />
             <write_to_logbook category="general" title="'PP MAMS: Pilot Deficit'" text="'Ship ' + @$ship.knownname + ' ('+@$ship.idcode+') fired pilot: ' + @$fired_npc.knownname" />
-            <debug_text text="'PP MAMS: Pilot firing confirmed for ' + @$ship.knownname + ' - searching for replacement'" />
 
-            <!-- REPLACEMENT LOGIC v3: Component-based NPC assignment -->
-            <set_value name="$target_ship" exact="$ship" />
+            <!-- Signal child cue to wait for control entity removal -->
+            <signal_cue_instantly cue="PilotReplacementHandler" param="$ship"/>
+          </do_if>
+        </do_if>
+      </actions>
+      <cues>
+        <!-- Child cue: Wait for pilot removal event, then replace -->
+        <cue name="PilotReplacementHandler" instantiate="true">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <set_value name="$target_ship" exact="event.param"/>
+          </actions>
+          <cues>
+            <cue name="WaitForPilotRemoval">
+              <conditions>
+                <event_control_entity_removed object="$target_ship"/>
+              </conditions>
+              <actions>
+                <!-- REPLACEMENT LOGIC v4: Event-based NPC assignment -->
             <set_value name="$candidates" exact="[]" />
             <set_value name="$candidate_ships" exact="[]" />
             <set_value name="$candidate_skills" exact="[]" />
-            <debug_text text="'PP MAMS: Building NPC candidate pool from all ships...'" />
 
             <!-- Find all player ships -->
             <find_object name="$all_ships" class="ship" owner="faction.player" multiple="true" />
-            <debug_text text="'PP MAMS: Scanning ' + $all_ships.count + ' player-owned objects'" />
 
             <!-- Build candidate pool using find_object_component -->
             <do_all exact="$all_ships.count" counter="$i">
@@ -252,8 +176,6 @@
               </do_if>
             </do_all>
 
-            <debug_text text="'PP MAMS: Found ' + $candidates.count + ' eligible pilot candidates'" />
-
             <!-- Find best candidate by skill -->
             <do_if value="$candidates.count gt 0">
               <set_value name="$best_index" exact="-1" />
@@ -270,22 +192,20 @@
               <set_value name="$best_npc" exact="$candidates.{$best_index}" />
               <set_value name="$source_ship" exact="$candidate_ships.{$best_index}" />
 
-              <debug_text text="'PP MAMS: Best pilot: ' + @$best_npc.knownname + ' (skill: ' + $best_skill + ') from ' + @$source_ship.knownname" />
-
               <!-- ASSIGNMENT: Transfer NPC to target ship as pilot -->
-              <assign_control_entity actor="$best_npc" object="$target_ship" post="controlpost.aipilot" transfer="true"/>
+              <assign_control_entity actor="$best_npc" object="$target_ship" post="controlpost.aipilot" init="true" transfer="true"/>
 
               <show_notification caption="'PP MAMS: Pilot Assigned!'" text="@$best_npc.knownname + ' (skill: ' + $best_skill + ') → ' + @$target_ship.knownname" />
               <write_to_logbook category="general" title="'PP MAMS: Pilot Assigned'" text="'Assigned ' + @$best_npc.knownname + ' (skill: ' + $best_skill + ') from ' + @$source_ship.knownname + ' to ' + @$target_ship.knownname" />
-              <debug_text text="'PP MAMS: Pilot assignment complete!'" />
             </do_if>
             <do_else>
-              <debug_text text="'PP MAMS: ERROR - No eligible candidates found!'" />
               <show_notification caption="'PP MAMS: No Candidates'" text="'No eligible crew found to replace pilot on ' + @$target_ship.knownname" />
             </do_else>
-          </do_if>
-        </do_if>
-      </actions>
+              </actions>
+            </cue>
+          </cues>
+        </cue>
+      </cues>
     </cue>
 
     <!-- EVENT MONITORS: Track game events for debugging - DEBUG ONLY, NO NOTIFICATIONS -->
