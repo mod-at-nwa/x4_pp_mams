@@ -203,7 +203,6 @@
               <debug_text text="'  Source Ship Class: ' + @$source_ship.class" />
               <debug_text text="'  Source Ship Macro: ' + @$source_ship.macro" />
               <debug_text text="'  Source Ship Purpose: ' + @$source_ship.primarypurpose" />
-              <debug_text text="'  Boarding Marines Count: ' + @$source_ship.boardingmarines.count" />
               <debug_text text="'  Pilot Name: ' + @$best_npc.knownname" />
               <debug_text text="'  Pilot Skill: ' + $best_skill" />
               <debug_text text="'  Pilot Role: ' + @$best_npc.controlpost" />
