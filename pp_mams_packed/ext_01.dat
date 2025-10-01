@@ -10,11 +10,11 @@
         <event_game_loaded />
       </conditions>
       <actions>
-        <set_value name="$version" exact="'3.49'" />
+        <set_value name="$version" exact="'3.50'" />
         <set_value name="$method" exact="'event_control_entity_removed'" />
 
         <debug_text text="'=== PP MAMS v' + $version + ': Using ' + $method + ' ==='" />
-        <debug_text text="'PP MAMS: v3.49 - Protected Manticore pilots!'" />
+        <debug_text text="'PP MAMS: v3.50 - Debug visibility for pilot transfers!'" />
         <debug_text text="'PP MAMS: Init cue executed - version ' + $version" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -196,6 +196,17 @@
               <!-- Get best candidate NPC entity -->
               <set_value name="$best_npc" exact="$candidates.{$best_index}" />
               <set_value name="$source_ship" exact="$candidate_ships.{$best_index}" />
+
+              <!-- DEBUG: Show transfer details BEFORE assignment -->
+              <debug_text text="'PP MAMS: === PILOT TRANSFER DETAILS ==='" />
+              <debug_text text="'  Source Ship: ' + @$source_ship.knownname + ' (' + @$source_ship.idcode + ')'" />
+              <debug_text text="'  Source Ship Class: ' + @$source_ship.class" />
+              <debug_text text="'  Source Ship Macro: ' + @$source_ship.macro" />
+              <debug_text text="'  Boarding Marines Count: ' + @$source_ship.boardingmarines.count" />
+              <debug_text text="'  Pilot Name: ' + @$best_npc.knownname" />
+              <debug_text text="'  Pilot Skill: ' + $best_skill" />
+              <debug_text text="'  Pilot Role: ' + @$best_npc.controlpost" />
+              <debug_text text="'  Target Ship: ' + @$target_ship.knownname + ' (' + @$target_ship.idcode + ')'" />
 
               <!-- ASSIGNMENT: Transfer NPC to target ship as pilot -->
               <assign_control_entity actor="$best_npc" object="$target_ship" post="controlpost.aipilot" init="true" transfer="true"/>
