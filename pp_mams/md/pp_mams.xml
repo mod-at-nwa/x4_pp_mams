@@ -10,11 +10,11 @@
         <event_game_loaded />
       </conditions>
       <actions>
-        <set_value name="$version" exact="'3.48'" />
+        <set_value name="$version" exact="'3.49'" />
         <set_value name="$method" exact="'event_control_entity_removed'" />
 
         <debug_text text="'=== PP MAMS v' + $version + ': Using ' + $method + ' ==='" />
-        <debug_text text="'PP MAMS: v3.48 - Top-level cue signaling pattern!'" />
+        <debug_text text="'PP MAMS: v3.49 - Protected Manticore pilots!'" />
         <debug_text text="'PP MAMS: Init cue executed - version ' + $version" />
 
         <set_value name="global.$pp_mams_enabled" exact="true" />
@@ -34,9 +34,9 @@
         <find_object name="$all_ships" class="ship" owner="faction.player" multiple="true" />
         <do_all exact="$all_ships.count" counter="$y">
           <set_value name="$check_ship" exact="$all_ships.{$y}" />
-          <do_if value="@$check_ship.people.count gt 0">
+          <do_if value="$check_ship.exists and @$check_ship.people.count gt 0">
             <!-- Check if pilot is Yoshiko -->
-            <do_if value="$check_ship.pilot.exists and $check_ship.pilot.knownname == 'Yoshiko Ueda'">
+            <do_if value="@$check_ship.pilot.exists and @$check_ship.pilot.knownname == 'Yoshiko Ueda'">
               <set_value name="global.$yoshiko_ship" exact="$check_ship" />
               <set_value name="global.$yoshiko_last_ship" exact="$check_ship" />
               <set_value name="$yoshiko_found" exact="true" />
@@ -65,7 +65,7 @@
           <actions>
             <do_if value="global.$yoshiko_ship and global.$yoshiko_ship.exists">
               <!-- Check if Yoshiko is still the pilot -->
-              <do_if value="global.$yoshiko_ship.pilot.exists and global.$yoshiko_ship.pilot.knownname == 'Yoshiko Ueda'">
+              <do_if value="@global.$yoshiko_ship.pilot.exists and @global.$yoshiko_ship.pilot.knownname == 'Yoshiko Ueda'">
                 <!-- Still on same ship, no change -->
               </do_if>
               <do_else>
@@ -79,7 +79,7 @@
                 <set_value name="$found_new" exact="false" />
                 <do_all exact="$search_ships.count" counter="$s">
                   <set_value name="$scan" exact="$search_ships.{$s}" />
-                  <do_if value="$scan.pilot.exists and $scan.pilot.knownname == 'Yoshiko Ueda'">
+                  <do_if value="@$scan.pilot.exists and @$scan.pilot.knownname == 'Yoshiko Ueda'">
                     <set_value name="global.$yoshiko_last_ship" exact="global.$yoshiko_ship" />
                     <set_value name="global.$yoshiko_ship" exact="$scan" />
                     <set_value name="$found_new" exact="true" />
@@ -154,8 +154,11 @@
               <!-- Skip same ship (no point moving pilot from same ship) -->
               <do_if value="$scan_ship != $target_ship">
 
-                <!-- Find all NPCs on this ship -->
-                <find_object_component name="$ship_npcs" class="class.npc" object="$scan_ship" multiple="true" />
+                <!-- Skip boarding ships (Manticore, etc.) - those pilots are important! -->
+                <do_if value="@$scan_ship.boardingmarines.count == 0">
+
+                  <!-- Find all NPCs on this ship -->
+                  <find_object_component name="$ship_npcs" class="class.npc" object="$scan_ship" multiple="true" />
 
                 <!-- Check each NPC -->
                 <do_for_each name="$npc" in="$ship_npcs">
@@ -174,6 +177,7 @@
                     </do_if>
                   </do_if>
                 </do_for_each>
+                </do_if>
               </do_if>
             </do_all>
 
